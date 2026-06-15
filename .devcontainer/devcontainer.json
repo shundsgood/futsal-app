@@ -1,0 +1,20 @@
+{
+  "name": "Futsal App Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js"
+    }
+  },
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+  ],
+  "containerEnv": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "remoteUser": "node"
+}
