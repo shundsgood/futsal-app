@@ -10,9 +10,6 @@
       "label": "Next.js"
     }
   },
-  "mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
-  ],
   "containerEnv": {
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
