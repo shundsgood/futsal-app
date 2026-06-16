@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { VALID_ATTENDANCE_STATUSES } from "@/lib/constants";
 
 const RESPONSE_TO_ATTENDANCE: Record<string, string> = {
   available: "attending",
@@ -26,38 +27,56 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
     }),
   ]);
 
+  // optionId と pollId の整合性確認
+  if (option.schedulePollId !== pollId) throw new Error("不正なリクエストです");
   if (option.poll.teamId !== teamId) throw new Error("不正なリクエストです");
+
+  // 二重作成防止: poll.status が open でなければブロック
+  if (option.poll.status !== "open") {
+    const existingEvent = await prisma.event.findFirst({
+      where: { sourcePollId: pollId },
+    });
+    if (existingEvent) redirect(`/teams/${teamId}/events/${existingEvent.id}`);
+    throw new Error("この日程調整はすでに確定済みです");
+  }
 
   const responseMap = new Map(option.responses.map((r) => [r.teamMemberId, r.responseType]));
 
-  const event = await prisma.event.create({
-    data: {
-      teamId,
-      sourcePollId: pollId,
-      title: option.poll.title,
-      description: option.poll.description,
-      eventType: option.poll.eventType,
-      startDatetime: option.startDatetime,
-      endDatetime: option.endDatetime,
-      venueName: option.venueName,
-      note: option.note,
-      status: "confirmed",
-      createdBy: user.id,
-      attendances: {
-        create: activeMembers.map((m) => {
-          const responseType = responseMap.get(m.id);
-          return {
-            teamMemberId: m.id,
-            status: RESPONSE_TO_ATTENDANCE[responseType ?? ""] ?? "undecided",
-          };
-        }),
-      },
-    },
-  });
+  // poll の status 更新と event 作成をトランザクションで実行
+  const event = await prisma.$transaction(async (tx) => {
+    // updateMany で "open" のものだけ更新し、count=0 なら他リクエストが先に確定済み
+    const updated = await tx.schedulePoll.updateMany({
+      where: { id: pollId, status: "open" },
+      data: { status: "confirmed" },
+    });
+    if (updated.count === 0) {
+      throw new Error("この日程調整はすでに確定済みです");
+    }
 
-  await prisma.schedulePoll.update({
-    where: { id: pollId },
-    data: { status: "confirmed" },
+    return tx.event.create({
+      data: {
+        teamId,
+        sourcePollId: pollId,
+        title: option.poll.title,
+        description: option.poll.description,
+        eventType: option.poll.eventType,
+        startDatetime: option.startDatetime,
+        endDatetime: option.endDatetime,
+        venueName: option.venueName,
+        note: option.note,
+        status: "confirmed",
+        createdBy: user.id,
+        attendances: {
+          create: activeMembers.map((m) => {
+            const responseType = responseMap.get(m.id);
+            return {
+              teamMemberId: m.id,
+              status: RESPONSE_TO_ATTENDANCE[responseType ?? ""] ?? "undecided",
+            };
+          }),
+        },
+      },
+    });
   });
 
   redirect(`/teams/${teamId}/events/${event.id}`);
@@ -70,15 +89,20 @@ export async function submitEventAttendance(
 ) {
   const user = await getCurrentUser();
 
-  const member = await prisma.teamMember.findFirst({
-    where: { teamId, userId: user.id },
-  });
+  const [member, event] = await Promise.all([
+    prisma.teamMember.findFirst({ where: { teamId, userId: user.id } }),
+    prisma.event.findFirst({ where: { id: eventId, teamId } }),
+  ]);
+
   if (!member) throw new Error("このチームのメンバーではありません");
+  if (!event) throw new Error("イベントが見つかりません");
 
   const status = formData.get("status") as string | null;
   const comment = (formData.get("comment") as string | null)?.trim() || null;
 
-  if (!status) throw new Error("出欠を選択してください");
+  if (!status || !VALID_ATTENDANCE_STATUSES.includes(status as typeof VALID_ATTENDANCE_STATUSES[number])) {
+    throw new Error("出欠を正しく選択してください");
+  }
 
   await prisma.eventAttendance.upsert({
     where: {

@@ -1,15 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { EVENT_TYPE_LABEL } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string }> };
-
-const EVENT_TYPE_LABEL: Record<string, string> = {
-  practice: "練習",
-  friendly: "練習試合",
-  tournament: "大会",
-  league: "リーグ戦",
-  other: "その他",
-};
 
 const STATUS_LABEL: Record<string, string> = {
   confirmed: "確定",
@@ -27,7 +20,6 @@ export default async function EventsPage({ params }: Props) {
   const events = await prisma.event.findMany({
     where: { teamId },
     include: {
-      _count: { select: { attendances: true } },
       attendances: { where: { status: "attending" } },
     },
     orderBy: { startDatetime: "desc" },

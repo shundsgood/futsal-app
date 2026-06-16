@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { EVENT_TYPE_LABEL } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
-
-const EVENT_TYPE_LABEL: Record<string, string> = {
-  practice: "練習",
-  friendly: "練習試合",
-  tournament: "大会",
-  league: "リーグ戦",
-  other: "その他",
-};
 
 const ATTENDANCE_LABEL: Record<string, string> = {
   attending: "参加",

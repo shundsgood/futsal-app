@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { confirmPoll } from "@/lib/actions/event";
+import { EVENT_TYPE_LABEL } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
@@ -29,14 +30,6 @@ const RESPONSE_COLOR: Record<string, string> = {
   available: "text-green-600 font-bold",
   maybe: "text-yellow-500 font-bold",
   unavailable: "text-red-500 font-bold",
-};
-
-const EVENT_TYPE_LABEL: Record<string, string> = {
-  practice: "練習",
-  friendly: "練習試合",
-  tournament: "大会",
-  league: "リーグ戦",
-  other: "その他",
 };
 
 export default async function PollDetailPage({ params }: Props) {
