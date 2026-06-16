@@ -1,0 +1,40 @@
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { AttendForm } from "./AttendForm";
+
+type Props = { params: Promise<{ teamId: string; eventId: string }> };
+
+export default async function AttendPage({ params }: Props) {
+  const { teamId, eventId } = await params;
+  const user = await getCurrentUser();
+
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event || event.teamId !== teamId) notFound();
+
+  const member = await prisma.teamMember.findFirst({
+    where: { teamId, userId: user.id },
+  });
+
+  const existing = member
+    ? await prisma.eventAttendance.findUnique({
+        where: { eventId_teamMemberId: { eventId, teamMemberId: member.id } },
+      })
+    : null;
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-gray-900 mb-0.5">{event.title}</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        {member?.displayName ?? user.displayName} として回答
+      </p>
+
+      <AttendForm
+        eventId={eventId}
+        teamId={teamId}
+        initialStatus={existing?.status ?? "undecided"}
+        initialComment={existing?.comment ?? ""}
+      />
+    </div>
+  );
+}

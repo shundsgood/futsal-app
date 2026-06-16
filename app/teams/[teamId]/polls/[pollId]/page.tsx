@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { confirmPoll } from "@/lib/actions/event";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
@@ -155,6 +156,17 @@ export default async function PollDetailPage({ params }: Props) {
                   <span className="text-red-500 font-bold">× {counts.unavailable}</span>
                   <span className="text-gray-400">未 {unanswered}</span>
                 </div>
+
+                {poll.status === "open" && (
+                  <form action={confirmPoll.bind(null, pollId, opt.id, teamId)}>
+                    <button
+                      type="submit"
+                      className="mt-3 w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-green-700 transition"
+                    >
+                      この日で確定
+                    </button>
+                  </form>
+                )}
               </div>
             );
           })}

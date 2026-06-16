@@ -17,6 +17,7 @@ model User {
   ownedTeams   Team[]
   teamMembers  TeamMember[]
   createdPolls SchedulePoll[]
+  createdEvents Event[]
 }
 
 model Team {
@@ -31,6 +32,7 @@ model Team {
   owner   User         @relation(fields: [ownerUserId], references: [id])
   members TeamMember[]
   polls   SchedulePoll[]
+  events  Event[]
 }
 
 model TeamMember {
@@ -50,9 +52,10 @@ model TeamMember {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  team      Team                   @relation(fields: [teamId], references: [id])
-  user      User?                  @relation(fields: [userId], references: [id])
-  responses SchedulePollResponse[]
+  team              Team                   @relation(fields: [teamId], references: [id])
+  user              User?                  @relation(fields: [userId], references: [id])
+  responses         SchedulePollResponse[]
+  eventAttendances  EventAttendance[]
 }
 
 model SchedulePoll {
@@ -72,6 +75,7 @@ model SchedulePoll {
   team    Team                 @relation(fields: [teamId], references: [id])
   creator User                 @relation(fields: [createdBy], references: [id])
   options SchedulePollOption[]
+  events  Event[]
 }
 
 model SchedulePollOption {
@@ -103,4 +107,43 @@ model SchedulePollResponse {
   teamMember TeamMember         @relation(fields: [teamMemberId], references: [id])
 
   @@unique([schedulePollOptionId, teamMemberId])
+}
+
+model Event {
+  id            String    @id @default(cuid())
+  teamId        String
+  sourcePollId  String?
+  title         String
+  description   String?
+  eventType     String?
+  startDatetime DateTime
+  endDatetime   DateTime?
+  venueName     String?
+  note          String?
+  // confirmed | cancelled
+  status        String    @default("confirmed")
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  team        Team              @relation(fields: [teamId], references: [id])
+  sourcePoll  SchedulePoll?     @relation(fields: [sourcePollId], references: [id])
+  creator     User              @relation(fields: [createdBy], references: [id])
+  attendances EventAttendance[]
+}
+
+model EventAttendance {
+  id           String   @id @default(cuid())
+  eventId      String
+  teamMemberId String
+  // attending | undecided | absent
+  status       String   @default("undecided")
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamMember TeamMember @relation(fields: [teamMemberId], references: [id])
+
+  @@unique([eventId, teamMemberId])
 }

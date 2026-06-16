@@ -6,9 +6,13 @@ type Props = { params: Promise<{ teamId: string }> };
 export default async function TeamDashboardPage({ params }: Props) {
   const { teamId } = await params;
 
-  const [memberCount, openPollCount] = await Promise.all([
+  const now = new Date();
+  const [memberCount, openPollCount, upcomingEventCount] = await Promise.all([
     prisma.teamMember.count({ where: { teamId, membershipStatus: "active" } }),
     prisma.schedulePoll.count({ where: { teamId, status: "open" } }),
+    prisma.event.count({
+      where: { teamId, status: "confirmed", startDatetime: { gte: now } },
+    }),
   ]);
 
   const cards = [
@@ -22,6 +26,12 @@ export default async function TeamDashboardPage({ params }: Props) {
       href: `/teams/${teamId}/polls`,
       title: "日程調整",
       value: `回答受付中 ${openPollCount}件`,
+      action: "一覧を見る →",
+    },
+    {
+      href: `/teams/${teamId}/events`,
+      title: "イベント",
+      value: `直近 ${upcomingEventCount}件`,
       action: "一覧を見る →",
     },
   ];
