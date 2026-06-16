@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { confirmPoll } from "@/lib/actions/event";
+import { reopenPoll } from "@/lib/actions/poll";
 import { EVENT_TYPE_LABEL } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
@@ -92,14 +93,34 @@ export default async function PollDetailPage({ params }: Props) {
           </p>
         )}
 
-        {poll.status === "open" && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <Link
-              href={`/teams/${teamId}/polls/${pollId}/respond`}
-              className="block w-full text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              回答する
-            </Link>
+        {poll.status !== "cancelled" && (
+          <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+            {poll.status === "open" && (
+              <>
+                <Link
+                  href={`/teams/${teamId}/polls/${pollId}/respond`}
+                  className="block w-full text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  回答する
+                </Link>
+                <Link
+                  href={`/teams/${teamId}/polls/${pollId}/edit`}
+                  className="block w-full text-center border border-gray-300 text-gray-600 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition"
+                >
+                  候補日を編集
+                </Link>
+              </>
+            )}
+            {poll.status === "confirmed" && (
+              <form action={reopenPoll.bind(null, pollId, teamId)}>
+                <button
+                  type="submit"
+                  className="w-full border border-amber-300 text-amber-700 text-sm font-medium py-2 rounded-lg hover:bg-amber-50 transition"
+                >
+                  回答受付中に戻す
+                </button>
+              </form>
+            )}
           </div>
         )}
       </div>

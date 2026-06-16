@@ -82,6 +82,15 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
   redirect(`/teams/${teamId}/events/${event.id}`);
 }
 
+export async function deleteEvent(eventId: string, teamId: string) {
+  const event = await prisma.event.findFirst({ where: { id: eventId, teamId } });
+  if (!event) throw new Error("イベントが見つかりません");
+
+  await prisma.event.delete({ where: { id: eventId } });
+
+  redirect(`/teams/${teamId}/events`);
+}
+
 export async function submitEventAttendance(
   eventId: string,
   teamId: string,

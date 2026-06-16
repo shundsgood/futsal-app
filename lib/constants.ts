@@ -20,3 +20,14 @@ export const MATCH_RESULT_COLOR: Record<string, string> = {
   draw: "bg-gray-100 text-gray-600",
   loss: "bg-red-100 text-red-600",
 };
+
+export const GOAL_TYPE_LABEL: Record<string, string> = {
+  normal: "通常得点",
+  own_goal: "オウンゴール",
+  unknown_scorer: "得点者不明",
+};
+
+export const ASSIST_TYPE_LABEL: Record<string, string> = {
+  none: "アシストなし",
+  unknown: "不明",
+};

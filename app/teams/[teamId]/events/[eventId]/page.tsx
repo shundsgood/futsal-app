@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPE_LABEL, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
+import { DeleteEventButton } from "./DeleteEventButton";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
 
@@ -25,7 +26,10 @@ export default async function EventDetailPage({ params }: Props) {
     include: {
       attendances: { include: { teamMember: true } },
       matches: {
-        include: { players: true },
+        include: {
+          players: true,
+          goals: { include: { scorer: true }, orderBy: { goalOrder: "asc" } },
+        },
         orderBy: { matchOrder: "asc" },
       },
     },
@@ -103,6 +107,7 @@ export default async function EventDetailPage({ params }: Props) {
               元の日程調整を見る
             </Link>
           )}
+          <DeleteEventButton eventId={eventId} teamId={teamId} />
         </div>
       </div>
 
@@ -166,6 +171,9 @@ export default async function EventDetailPage({ params }: Props) {
                     >
                       {MATCH_RESULT_LABEL[match.result] ?? match.result}
                     </span>
+                    {match.goals.length !== match.ourScore && (
+                      <span title="得点記録数とスコアが一致していません" className="text-amber-500 text-xs">⚠️</span>
+                    )}
                     <Link
                       href={`/teams/${teamId}/events/${eventId}/matches/${match.id}/edit`}
                       className="text-xs text-gray-400 hover:text-blue-600"
@@ -182,7 +190,17 @@ export default async function EventDetailPage({ params }: Props) {
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
                   <span>出場 {match.players.length}名</span>
-                  {match.memo && <span className="truncate">{match.memo}</span>}
+                  {match.goals.length > 0 && (
+                    <span className="truncate">
+                      {match.goals
+                        .map((g) =>
+                          g.goalType === "normal"
+                            ? (g.scorer?.displayName ?? "—")
+                            : GOAL_TYPE_LABEL[g.goalType] ?? g.goalType,
+                        )
+                        .join(", ")}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

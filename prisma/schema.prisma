@@ -57,6 +57,8 @@ model TeamMember {
   responses         SchedulePollResponse[]
   eventAttendances  EventAttendance[]
   matchPlayers      MatchPlayer[]
+  scoredGoals       Goal[]        @relation("GoalScorer")
+  assistedGoals     Goal[]        @relation("GoalAssist")
 }
 
 model SchedulePoll {
@@ -165,6 +167,7 @@ model Match {
 
   event   Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   players MatchPlayer[]
+  goals   Goal[]
 }
 
 model MatchPlayer {
@@ -177,4 +180,22 @@ model MatchPlayer {
   teamMember TeamMember @relation(fields: [teamMemberId], references: [id])
 
   @@unique([matchId, teamMemberId])
+}
+
+model Goal {
+  id         String   @id @default(cuid())
+  matchId    String
+  // normal | own_goal | unknown_scorer
+  goalType   String   @default("normal")
+  scorerId   String?
+  // none | unknown | member
+  assistType String   @default("none")
+  assistId   String?
+  goalOrder  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  match  Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  scorer TeamMember? @relation("GoalScorer", fields: [scorerId], references: [id])
+  assist TeamMember? @relation("GoalAssist", fields: [assistId], references: [id])
 }
