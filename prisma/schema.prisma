@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownedTeams   Team[]
+  teamMembers  TeamMember[]
+  createdPolls SchedulePoll[]
+}
+
+model Team {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  activityArea String?
+  ownerUserId  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  owner   User         @relation(fields: [ownerUserId], references: [id])
+  members TeamMember[]
+  polls   SchedulePoll[]
+}
+
+model TeamMember {
+  id               String    @id @default(cuid())
+  teamId           String
+  userId           String?
+  displayName      String
+  uniformNumber    Int?
+  position         String?
+  uniformSize      String?
+  // active | inactive | left
+  membershipStatus String    @default("active")
+  // owner | admin | member
+  role             String    @default("member")
+  joinedAt         DateTime?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  team      Team                   @relation(fields: [teamId], references: [id])
+  user      User?                  @relation(fields: [userId], references: [id])
+  responses SchedulePollResponse[]
+}
+
+model SchedulePoll {
+  id               String    @id @default(cuid())
+  teamId           String
+  title            String
+  description      String?
+  // practice | friendly | tournament | league | other
+  eventType        String?
+  responseDeadline DateTime?
+  // open | closed | confirmed | cancelled
+  status           String    @default("open")
+  createdBy        String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  team    Team                 @relation(fields: [teamId], references: [id])
+  creator User                 @relation(fields: [createdBy], references: [id])
+  options SchedulePollOption[]
+}
+
+model SchedulePollOption {
+  id             String    @id @default(cuid())
+  schedulePollId String
+  startDatetime  DateTime
+  endDatetime    DateTime?
+  venueName      String?
+  note           String?
+  displayOrder   Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  poll      SchedulePoll           @relation(fields: [schedulePollId], references: [id], onDelete: Cascade)
+  responses SchedulePollResponse[]
+}
+
+model SchedulePollResponse {
+  id                   String   @id @default(cuid())
+  schedulePollOptionId String
+  teamMemberId         String
+  // available | maybe | unavailable
+  responseType         String
+  comment              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  option     SchedulePollOption @relation(fields: [schedulePollOptionId], references: [id], onDelete: Cascade)
+  teamMember TeamMember         @relation(fields: [teamMemberId], references: [id])
+
+  @@unique([schedulePollOptionId, teamMemberId])
+}
