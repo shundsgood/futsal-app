@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPoll } from "@/lib/actions/poll";
 
 type Option = { id: number };
@@ -16,9 +16,10 @@ const EVENT_TYPES = [
 
 export function PollForm({ teamId }: { teamId: string }) {
   const [options, setOptions] = useState<Option[]>([{ id: 0 }]);
+  const nextId = useRef(1);
 
   const addOption = () =>
-    setOptions((prev) => [...prev, { id: prev.length }]);
+    setOptions((prev) => [...prev, { id: nextId.current++ }]);
 
   const removeOption = (id: number) =>
     setOptions((prev) => prev.filter((o) => o.id !== id));
@@ -120,7 +121,7 @@ export function PollForm({ teamId }: { teamId: string }) {
                 </button>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">
                     開始日時 <span className="text-red-500">*</span>

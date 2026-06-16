@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { TeamNav } from "./TeamNav";
 
 type Props = {
   children: React.ReactNode;
@@ -12,12 +13,6 @@ export default async function TeamLayout({ children, params }: Props) {
 
   const team = await prisma.team.findUnique({ where: { id: teamId } });
   if (!team) notFound();
-
-  const navItems = [
-    { href: `/teams/${teamId}`, label: "ホーム" },
-    { href: `/teams/${teamId}/members`, label: "メンバー" },
-    { href: `/teams/${teamId}/polls`, label: "日程調整" },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,20 +28,7 @@ export default async function TeamLayout({ children, params }: Props) {
             </span>
           </div>
         </div>
-        {/* Nav tabs */}
-        <nav className="max-w-lg mx-auto px-4">
-          <div className="flex border-t border-gray-100">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex-1 text-center text-sm py-2.5 text-gray-600 hover:text-blue-600 font-medium"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
+        <TeamNav teamId={teamId} />
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6">{children}</main>

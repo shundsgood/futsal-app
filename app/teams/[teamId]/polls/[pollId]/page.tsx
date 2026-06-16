@@ -4,6 +4,20 @@ import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
+const STATUS_LABEL: Record<string, string> = {
+  open: "回答受付中",
+  closed: "回答締切",
+  confirmed: "確定済み",
+  cancelled: "中止",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  open: "bg-blue-100 text-blue-700",
+  closed: "bg-gray-100 text-gray-600",
+  confirmed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-600",
+};
+
 const RESPONSE_LABEL: Record<string, string> = {
   available: "○",
   maybe: "△",
@@ -48,14 +62,20 @@ export default async function PollDetailPage({ params }: Props) {
     orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
   });
 
+  const activeMemberIds = new Set(allMembers.map((m) => m.id));
+
   return (
     <div className="space-y-5">
       {/* 概要 */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <h2 className="text-lg font-bold text-gray-900">{poll.title}</h2>
-          <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-0.5 rounded-full shrink-0">
-            {poll.status === "open" ? "回答受付中" : poll.status}
+          <span
+            className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+              STATUS_COLOR[poll.status] ?? "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {STATUS_LABEL[poll.status] ?? poll.status}
           </span>
         </div>
         {poll.eventType && (
@@ -97,10 +117,11 @@ export default async function PollDetailPage({ params }: Props) {
           {poll.options.map((opt, idx) => {
             const counts = { available: 0, maybe: 0, unavailable: 0 };
             for (const r of opt.responses) {
+              if (!activeMemberIds.has(r.teamMemberId)) continue;
               if (r.responseType in counts)
                 counts[r.responseType as keyof typeof counts]++;
             }
-            const answered = opt.responses.length;
+            const answered = counts.available + counts.maybe + counts.unavailable;
             const unanswered = allMembers.length - answered;
 
             return (
