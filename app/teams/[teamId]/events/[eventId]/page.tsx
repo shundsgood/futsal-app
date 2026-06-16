@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPE_LABEL } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
 
@@ -24,6 +24,10 @@ export default async function EventDetailPage({ params }: Props) {
     where: { id: eventId },
     include: {
       attendances: { include: { teamMember: true } },
+      matches: {
+        include: { players: true },
+        orderBy: { matchOrder: "asc" },
+      },
     },
   });
 
@@ -130,6 +134,60 @@ export default async function EventDetailPage({ params }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* 試合結果 */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-gray-700">試合結果</h3>
+          <Link
+            href={`/teams/${teamId}/events/${eventId}/matches/new`}
+            className="text-sm font-medium text-blue-600 hover:underline"
+          >
+            + 追加
+          </Link>
+        </div>
+
+        {event.matches.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-gray-400 text-sm">
+            試合結果がまだありません
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {event.matches.map((match) => (
+              <div key={match.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-gray-400 font-medium">第{match.matchOrder}試合</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        MATCH_RESULT_COLOR[match.result] ?? "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {MATCH_RESULT_LABEL[match.result] ?? match.result}
+                    </span>
+                    <Link
+                      href={`/teams/${teamId}/events/${eventId}/matches/${match.id}/edit`}
+                      className="text-xs text-gray-400 hover:text-blue-600"
+                    >
+                      編集
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-lg font-bold text-gray-900">
+                    {match.ourScore} - {match.opponentScore}
+                  </span>
+                  <span className="text-sm text-gray-500">vs {match.opponentName}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                  <span>出場 {match.players.length}名</span>
+                  {match.memo && <span className="truncate">{match.memo}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
