@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { confirmPoll } from "@/lib/actions/event";
 import { reopenPoll } from "@/lib/actions/poll";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 import { EVENT_TYPE_LABEL, POLL_RESPONSE_LABEL, POLL_RESPONSE_COLOR } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
@@ -102,12 +103,7 @@ export default async function PollDetailPage({ params }: Props) {
             )}
             {poll.status === "confirmed" && (
               <form action={reopenPoll.bind(null, pollId, teamId)}>
-                <button
-                  type="submit"
-                  className="w-full border border-amber-300 text-amber-700 text-sm font-medium py-2 rounded-lg hover:bg-amber-50 transition"
-                >
-                  回答受付中に戻す
-                </button>
+                <SubmitButton label="回答受付中に戻す" />
               </form>
             )}
           </div>
@@ -162,12 +158,7 @@ export default async function PollDetailPage({ params }: Props) {
 
                 {poll.status === "open" && (
                   <form action={confirmPoll.bind(null, pollId, opt.id, teamId)}>
-                    <button
-                      type="submit"
-                      className="mt-3 w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-green-700 transition"
-                    >
-                      この日で確定
-                    </button>
+                    <SubmitButton label="この日で確定" />
                   </form>
                 )}
               </div>

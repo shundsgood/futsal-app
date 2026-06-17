@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateMember } from "@/lib/actions/member";
 import { DeleteMemberButton } from "./_components/DeleteMemberButton";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type Props = { params: Promise<{ teamId: string; memberId: string }> };
 
@@ -142,12 +143,7 @@ export default async function EditMemberPage({ params }: Props) {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
-        >
-          保存する
-        </button>
+        <SubmitButton label="保存する" />
       </form>
 
       <div className="mt-4">

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { updatePollOptions } from "@/lib/actions/poll";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type OptionEntry = {
   localId: number;
@@ -134,12 +135,7 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
-      >
-        保存する
-      </button>
+      <SubmitButton label="保存する" />
     </form>
   );
 }

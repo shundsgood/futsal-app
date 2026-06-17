@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { updateMatch, deleteMatch } from "@/lib/actions/match";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
 import { GoalRows, GoalRow, GoalType } from "../../_components/GoalRows";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 import { MemberCheckList } from "../../_components/MemberCheckList";
 
 type Member = {
@@ -195,12 +196,7 @@ export function MatchEditForm({
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition"
-        >
-          保存する
-        </button>
+        <SubmitButton label="保存する" />
       </form>
 
       {/* 削除 */}

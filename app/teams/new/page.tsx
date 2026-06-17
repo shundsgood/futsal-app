@@ -1,4 +1,5 @@
 import { createTeam } from "@/lib/actions/team";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 export default function NewTeamPage() {
   return (
@@ -47,12 +48,7 @@ export default function NewTeamPage() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
-          >
-            作成する
-          </button>
+          <SubmitButton label="作成する" />
         </form>
       </div>
     </div>

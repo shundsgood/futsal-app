@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createMember } from "@/lib/actions/member";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type Props = { params: Promise<{ teamId: string }> };
 
@@ -104,12 +105,7 @@ export default async function NewMemberPage({ params }: Props) {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
-        >
-          追加する
-        </button>
+        <SubmitButton label="追加する" />
       </form>
     </div>
   );

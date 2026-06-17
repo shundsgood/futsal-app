@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createPoll } from "@/lib/actions/poll";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type Option = { id: number };
 
@@ -166,12 +167,7 @@ export function PollForm({ teamId }: { teamId: string }) {
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
-      >
-        作成する
-      </button>
+      <SubmitButton label="作成する" />
     </form>
   );
 }

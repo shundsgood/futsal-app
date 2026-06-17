@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateEvent } from "@/lib/actions/event";
 import { EVENT_TYPE_LABEL } from "@/lib/constants";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 import { toDatetimeLocal } from "@/lib/utils";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
@@ -159,12 +160,7 @@ export default async function EditEventPage({ params }: Props) {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition"
-          >
-            保存する
-          </button>
+          <SubmitButton label="保存する" />
         </form>
       </div>
     </div>

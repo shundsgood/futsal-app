@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createMatch } from "@/lib/actions/match";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 import { GoalRows, GoalRow, GoalType } from "../_components/GoalRows";
 import { MemberCheckList } from "../_components/MemberCheckList";
 
@@ -163,12 +164,7 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition"
-      >
-        登録する
-      </button>
+      <SubmitButton label="登録する" />
     </form>
   );
 }

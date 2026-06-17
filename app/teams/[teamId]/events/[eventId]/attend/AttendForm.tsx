@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitEventAttendance } from "@/lib/actions/event";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type Props = {
   eventId: string;
@@ -77,12 +78,7 @@ export function AttendForm({ eventId, teamId, initialStatus, initialComment }: P
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition"
-      >
-        保存する
-      </button>
+      <SubmitButton label="保存する" />
     </form>
   );
 }
