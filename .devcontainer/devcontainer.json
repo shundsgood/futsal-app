@@ -8,7 +8,7 @@
   "portsAttributes": {
     "3000": {
       "label": "Next.js"
-    }
+  } 
   },
   "containerEnv": {
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
