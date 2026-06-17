@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { updateMatch, deleteMatch } from "@/lib/actions/match";
-import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
+import {
+  MATCH_RESULT_LABEL,
+  MATCH_RESULT_COLOR,
+  GOAL_TYPE_LABEL,
+  ASSIST_TYPE_LABEL,
+} from "@/lib/constants";
+
+type GoalType = "normal" | "own_goal" | "unknown_scorer";
+
+type GoalRow = {
+  localId: number;
+  goalType: GoalType;
+  scorerId: string;
+  assistValue: string;
+};
 
 type Member = {
   id: string;
@@ -10,6 +24,12 @@ type Member = {
   uniformNumber: number | null;
   isAttending: boolean;
   isSelected: boolean;
+};
+
+type InitialGoal = {
+  goalType: GoalType;
+  scorerId: string;
+  assistValue: string;
 };
 
 type Props = {
@@ -24,7 +44,10 @@ type Props = {
     memo: string;
   };
   members: Member[];
+  initialGoals: InitialGoal[];
 };
+
+const GOAL_TYPES: GoalType[] = ["normal", "own_goal", "unknown_scorer"];
 
 function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
   if (our > opp) return "win";
@@ -32,16 +55,54 @@ function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
   return "loss";
 }
 
-export function MatchEditForm({ matchId, eventId, teamId, defaultValues, members }: Props) {
+export function MatchEditForm({
+  matchId,
+  eventId,
+  teamId,
+  defaultValues,
+  members,
+  initialGoals,
+}: Props) {
+  const nextLocalId = useRef(initialGoals.length);
+
   const [ourScore, setOurScore] = useState(defaultValues.ourScore);
   const [oppScore, setOppScore] = useState(defaultValues.opponentScore);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set(members.filter((m) => m.isSelected).map((m) => m.id)),
   );
+  const [goals, setGoals] = useState<GoalRow[]>(() =>
+    Array.from({ length: defaultValues.ourScore }, (_, i) => ({
+      localId: i,
+      goalType: initialGoals[i]?.goalType ?? "normal",
+      scorerId: initialGoals[i]?.scorerId ?? "",
+      assistValue: initialGoals[i]?.assistValue ?? "none",
+    })),
+  );
 
   const result = calcResult(ourScore, oppScore);
   const updateAction = updateMatch.bind(null, matchId, eventId, teamId);
   const deleteAction = deleteMatch.bind(null, matchId, eventId, teamId);
+
+  const handleOurScoreChange = (value: string) => {
+    const score = Math.max(0, parseInt(value) || 0);
+    setOurScore(score);
+    setGoals((prev) => {
+      if (score <= prev.length) return prev.slice(0, score);
+      return [
+        ...prev,
+        ...Array.from({ length: score - prev.length }, () => ({
+          localId: nextLocalId.current++,
+          goalType: "normal" as GoalType,
+          scorerId: "",
+          assistValue: "none",
+        })),
+      ];
+    });
+  };
+
+  const updateGoalField = (localId: number, patch: Partial<Omit<GoalRow, "localId">>) => {
+    setGoals((prev) => prev.map((g) => (g.localId === localId ? { ...g, ...patch } : g)));
+  };
 
   const toggleMember = (id: string) => {
     setSelectedIds((prev) => {
@@ -54,6 +115,8 @@ export function MatchEditForm({ matchId, eventId, teamId, defaultValues, members
 
   const attendingMembers = members.filter((m) => m.isAttending);
   const otherMembers = members.filter((m) => !m.isAttending);
+  const players = members.filter((m) => selectedIds.has(m.id));
+  const others = members.filter((m) => !selectedIds.has(m.id));
 
   return (
     <div className="space-y-6">
@@ -100,7 +163,7 @@ export function MatchEditForm({ matchId, eventId, teamId, defaultValues, members
                 type="number"
                 min={0}
                 value={ourScore}
-                onChange={(e) => setOurScore(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => handleOurScoreChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -118,15 +181,133 @@ export function MatchEditForm({ matchId, eventId, teamId, defaultValues, members
             </div>
             <div className="flex-1 mt-4">
               <span
-                className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${
-                  MATCH_RESULT_COLOR[result]
-                }`}
+                className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${MATCH_RESULT_COLOR[result]}`}
               >
                 {MATCH_RESULT_LABEL[result]}
               </span>
             </div>
           </div>
         </div>
+
+        {/* 得点記録 */}
+        {goals.length > 0 && (
+          <div>
+            <p className="block text-sm font-medium text-gray-700 mb-2">得点記録</p>
+            <div className="space-y-3">
+              {goals.map((row, idx) => (
+                <div
+                  key={row.localId}
+                  className="border border-gray-200 rounded-xl p-4 bg-gray-50"
+                >
+                  {/* hidden inputs for form submission */}
+                  <input type="hidden" name={`goalType_${idx}`} value={row.goalType} />
+                  {row.goalType === "normal" && (
+                    <>
+                      <input type="hidden" name={`scorerId_${idx}`} value={row.scorerId} />
+                      <input type="hidden" name={`assistValue_${idx}`} value={row.assistValue} />
+                    </>
+                  )}
+
+                  <p className="text-xs font-semibold text-gray-500 mb-3">得点 {idx + 1}</p>
+
+                  {/* 得点種別 */}
+                  <div className="flex gap-4 flex-wrap mb-3">
+                    {GOAL_TYPES.map((type) => (
+                      <label key={type} className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          checked={row.goalType === type}
+                          onChange={() =>
+                            updateGoalField(row.localId, {
+                              goalType: type,
+                              scorerId: "",
+                              assistValue: "none",
+                            })
+                          }
+                          className="accent-blue-600"
+                        />
+                        <span className="text-sm text-gray-700">{GOAL_TYPE_LABEL[type]}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {row.goalType === "normal" && (
+                    <div className="space-y-2">
+                      {/* 得点者 */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">得点者</label>
+                        <select
+                          value={row.scorerId}
+                          onChange={(e) =>
+                            updateGoalField(row.localId, { scorerId: e.target.value })
+                          }
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="">（未選択）</option>
+                          {players.length > 0 && (
+                            <optgroup label="出場メンバー">
+                              {players.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
+                                  {m.displayName}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {others.length > 0 && (
+                            <optgroup label="その他メンバー">
+                              {others.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
+                                  {m.displayName}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+
+                      {/* アシスト */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">アシスト</label>
+                        <select
+                          value={row.assistValue}
+                          onChange={(e) =>
+                            updateGoalField(row.localId, { assistValue: e.target.value })
+                          }
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="none">{ASSIST_TYPE_LABEL.none}</option>
+                          <option value="unknown">{ASSIST_TYPE_LABEL.unknown}</option>
+                          {players.length > 0 && (
+                            <optgroup label="出場メンバー">
+                              {players.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
+                                  {m.displayName}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {others.length > 0 && (
+                            <optgroup label="その他メンバー">
+                              {others.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
+                                  {m.displayName}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 出場メンバー */}
         <div>

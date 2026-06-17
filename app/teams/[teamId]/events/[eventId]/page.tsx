@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPE_LABEL, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
 import { DeleteEventButton } from "./DeleteEventButton";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
@@ -54,7 +54,22 @@ export default async function EventDetailPage({ params }: Props) {
     <div className="space-y-5">
       {/* 概要 */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="text-lg font-bold text-gray-900 mb-2">{event.title}</h2>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h2 className="text-lg font-bold text-gray-900">{event.title}</h2>
+          {event.eventType && (
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                EVENT_TYPE_COLOR[event.eventType] ?? "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {EVENT_TYPE_LABEL[event.eventType] ?? event.eventType}
+            </span>
+          )}
+        </div>
+
+        {event.finalRank && (
+          <p className="text-sm font-bold text-blue-700 mb-2">{event.finalRank}</p>
+        )}
 
         <div className="space-y-1 text-sm text-gray-600">
           <p>
@@ -76,11 +91,6 @@ export default async function EventDetailPage({ params }: Props) {
               </span>
             )}
           </p>
-          {event.eventType && (
-            <p className="text-gray-500">
-              {EVENT_TYPE_LABEL[event.eventType] ?? event.eventType}
-            </p>
-          )}
           {event.venueName && <p>{event.venueName}</p>}
           {event.description && <p className="text-gray-500">{event.description}</p>}
           {event.note && <p className="text-gray-500">{event.note}</p>}
@@ -98,6 +108,12 @@ export default async function EventDetailPage({ params }: Props) {
             className="block w-full text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
           >
             出欠を変更する
+          </Link>
+          <Link
+            href={`/teams/${teamId}/events/${eventId}/edit`}
+            className="block w-full text-center border border-gray-300 text-gray-600 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition"
+          >
+            イベントを編集
           </Link>
           {event.sourcePollId && (
             <Link

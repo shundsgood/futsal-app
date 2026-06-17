@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPE_LABEL } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string }> };
 
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: "確定",
-  cancelled: "中止",
-};
+function getStatusLabel(status: string, startDatetime: Date): string {
+  if (status === "cancelled") return "中止";
+  return new Date() < startDatetime ? "開催前" : "完了";
+}
 
-const STATUS_COLOR: Record<string, string> = {
-  confirmed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-600",
-};
+function getStatusColor(status: string, startDatetime: Date): string {
+  if (status === "cancelled") return "bg-red-100 text-red-600";
+  return new Date() < startDatetime ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500";
+}
 
 export default async function EventsPage({ params }: Props) {
   const { teamId } = await params;
@@ -45,13 +45,22 @@ export default async function EventsPage({ params }: Props) {
                 className="block bg-white rounded-xl border border-gray-200 px-4 py-4 hover:border-blue-400 hover:shadow-sm transition"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-gray-900">{event.title}</p>
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <p className="font-semibold text-gray-900">{event.title}</p>
+                    {event.eventType && (
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                          EVENT_TYPE_COLOR[event.eventType] ?? "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {EVENT_TYPE_LABEL[event.eventType] ?? event.eventType}
+                      </span>
+                    )}
+                  </div>
                   <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
-                      STATUS_COLOR[event.status] ?? "bg-gray-100 text-gray-500"
-                    }`}
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${getStatusColor(event.status, event.startDatetime)}`}
                   >
-                    {STATUS_LABEL[event.status] ?? event.status}
+                    {getStatusLabel(event.status, event.startDatetime)}
                   </span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
@@ -64,10 +73,10 @@ export default async function EventsPage({ params }: Props) {
                       minute: "2-digit",
                     })}
                   </span>
-                  {event.eventType && (
-                    <span>{EVENT_TYPE_LABEL[event.eventType] ?? event.eventType}</span>
-                  )}
                   {event.venueName && <span>{event.venueName}</span>}
+                  {event.finalRank && (
+                    <span className="font-medium text-blue-600">{event.finalRank}</span>
+                  )}
                   <span className="text-green-600 font-medium">
                     参加 {event.attendances.length}人
                   </span>

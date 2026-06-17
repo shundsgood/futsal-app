@@ -6,6 +6,14 @@ export const EVENT_TYPE_LABEL: Record<string, string> = {
   other: "その他",
 };
 
+export const EVENT_TYPE_COLOR: Record<string, string> = {
+  practice: "bg-green-100 text-green-700",
+  friendly: "bg-green-100 text-green-700",
+  tournament: "bg-blue-100 text-blue-700",
+  league: "bg-blue-100 text-blue-700",
+  other: "bg-gray-100 text-gray-600",
+};
+
 export const VALID_ATTENDANCE_STATUSES = ["attending", "undecided", "absent"] as const;
 export type AttendanceStatus = typeof VALID_ATTENDANCE_STATUSES[number];
 

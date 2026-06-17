@@ -123,6 +123,7 @@ model Event {
   endDatetime   DateTime?
   venueName     String?
   note          String?
+  finalRank     String?
   // confirmed | cancelled
   status        String    @default("confirmed")
   createdBy     String

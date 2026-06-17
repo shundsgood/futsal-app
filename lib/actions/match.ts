@@ -3,6 +3,12 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
+function parseAssist(assistValue: string | null): { assistType: string; assistId: string | null } {
+  if (!assistValue || assistValue === "none") return { assistType: "none", assistId: null };
+  if (assistValue === "unknown") return { assistType: "unknown", assistId: null };
+  return { assistType: "member", assistId: assistValue };
+}
+
 function calcResult(ourScore: number, opponentScore: number): string {
   if (ourScore > opponentScore) return "win";
   if (ourScore === opponentScore) return "draw";
@@ -82,8 +88,30 @@ export async function updateMatch(
 
   const result = calcResult(ourScore, opponentScore);
 
+  // parse goals from form
+  const goals: Array<{
+    goalType: string;
+    scorerId: string | null;
+    assistType: string;
+    assistId: string | null;
+    goalOrder: number;
+  }> = [];
+  let i = 0;
+  while (formData.has(`goalType_${i}`)) {
+    const goalType = formData.get(`goalType_${i}`) as string;
+    const scorerId =
+      goalType === "normal" ? ((formData.get(`scorerId_${i}`) as string | null) || null) : null;
+    const { assistType, assistId } =
+      goalType === "normal"
+        ? parseAssist(formData.get(`assistValue_${i}`) as string | null)
+        : { assistType: "none", assistId: null };
+    goals.push({ goalType, scorerId, assistType, assistId, goalOrder: i + 1 });
+    i++;
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.matchPlayer.deleteMany({ where: { matchId } });
+    await tx.goal.deleteMany({ where: { matchId } });
     await tx.match.update({
       where: { id: matchId },
       data: { matchOrder, opponentName, ourScore, opponentScore, result, memo },
@@ -91,6 +119,11 @@ export async function updateMatch(
     if (playerIds.length > 0) {
       await tx.matchPlayer.createMany({
         data: playerIds.map((teamMemberId) => ({ matchId, teamMemberId })),
+      });
+    }
+    if (goals.length > 0) {
+      await tx.goal.createMany({
+        data: goals.map((g) => ({ matchId, ...g })),
       });
     }
   });

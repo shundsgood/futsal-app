@@ -82,6 +82,40 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
   redirect(`/teams/${teamId}/events/${event.id}`);
 }
 
+export async function updateEvent(eventId: string, teamId: string, formData: FormData) {
+  const event = await prisma.event.findFirst({ where: { id: eventId, teamId } });
+  if (!event) throw new Error("イベントが見つかりません");
+
+  const title = (formData.get("title") as string | null)?.trim();
+  if (!title) throw new Error("タイトルは必須です");
+
+  const eventType = (formData.get("eventType") as string | null) || null;
+  const startDatetime = formData.get("startDatetime") as string | null;
+  if (!startDatetime) throw new Error("開始日時は必須です");
+
+  const endDatetime = (formData.get("endDatetime") as string | null) || null;
+  const venueName = (formData.get("venueName") as string | null)?.trim() || null;
+  const description = (formData.get("description") as string | null)?.trim() || null;
+  const note = (formData.get("note") as string | null)?.trim() || null;
+  const finalRank = (formData.get("finalRank") as string | null)?.trim() || null;
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: {
+      title,
+      eventType,
+      startDatetime: new Date(startDatetime),
+      endDatetime: endDatetime ? new Date(endDatetime) : null,
+      venueName,
+      description,
+      note,
+      finalRank,
+    },
+  });
+
+  redirect(`/teams/${teamId}/events/${eventId}`);
+}
+
 export async function deleteEvent(eventId: string, teamId: string) {
   const event = await prisma.event.findFirst({ where: { id: eventId, teamId } });
   if (!event) throw new Error("イベントが見つかりません");
