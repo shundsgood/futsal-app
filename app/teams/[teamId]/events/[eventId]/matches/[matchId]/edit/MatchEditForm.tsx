@@ -2,21 +2,9 @@
 
 import { useRef, useState } from "react";
 import { updateMatch, deleteMatch } from "@/lib/actions/match";
-import {
-  MATCH_RESULT_LABEL,
-  MATCH_RESULT_COLOR,
-  GOAL_TYPE_LABEL,
-  ASSIST_TYPE_LABEL,
-} from "@/lib/constants";
-
-type GoalType = "normal" | "own_goal" | "unknown_scorer";
-
-type GoalRow = {
-  localId: number;
-  goalType: GoalType;
-  scorerId: string;
-  assistValue: string;
-};
+import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
+import { GoalRows, GoalRow, GoalType } from "../../_components/GoalRows";
+import { MemberCheckList } from "../../_components/MemberCheckList";
 
 type Member = {
   id: string;
@@ -46,8 +34,6 @@ type Props = {
   members: Member[];
   initialGoals: InitialGoal[];
 };
-
-const GOAL_TYPES: GoalType[] = ["normal", "own_goal", "unknown_scorer"];
 
 function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
   if (our > opp) return "win";
@@ -113,8 +99,6 @@ export function MatchEditForm({
     });
   };
 
-  const attendingMembers = members.filter((m) => m.isAttending);
-  const otherMembers = members.filter((m) => !m.isAttending);
   const players = members.filter((m) => selectedIds.has(m.id));
   const others = members.filter((m) => !selectedIds.has(m.id));
 
@@ -162,6 +146,7 @@ export function MatchEditForm({
                 name="ourScore"
                 type="number"
                 min={0}
+                max={99}
                 value={ourScore}
                 onChange={(e) => handleOurScoreChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -174,193 +159,27 @@ export function MatchEditForm({
                 name="opponentScore"
                 type="number"
                 min={0}
+                max={99}
                 value={oppScore}
                 onChange={(e) => setOppScore(Math.max(0, parseInt(e.target.value) || 0))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex-1 mt-4">
-              <span
-                className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${MATCH_RESULT_COLOR[result]}`}
-              >
+              <span className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${MATCH_RESULT_COLOR[result]}`}>
                 {MATCH_RESULT_LABEL[result]}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 得点記録 */}
-        {goals.length > 0 && (
-          <div>
-            <p className="block text-sm font-medium text-gray-700 mb-2">得点記録</p>
-            <div className="space-y-3">
-              {goals.map((row, idx) => (
-                <div
-                  key={row.localId}
-                  className="border border-gray-200 rounded-xl p-4 bg-gray-50"
-                >
-                  {/* hidden inputs for form submission */}
-                  <input type="hidden" name={`goalType_${idx}`} value={row.goalType} />
-                  {row.goalType === "normal" && (
-                    <>
-                      <input type="hidden" name={`scorerId_${idx}`} value={row.scorerId} />
-                      <input type="hidden" name={`assistValue_${idx}`} value={row.assistValue} />
-                    </>
-                  )}
+        <GoalRows goals={goals} players={players} others={others} updateGoalField={updateGoalField} />
 
-                  <p className="text-xs font-semibold text-gray-500 mb-3">得点 {idx + 1}</p>
-
-                  {/* 得点種別 */}
-                  <div className="flex gap-4 flex-wrap mb-3">
-                    {GOAL_TYPES.map((type) => (
-                      <label key={type} className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={row.goalType === type}
-                          onChange={() =>
-                            updateGoalField(row.localId, {
-                              goalType: type,
-                              scorerId: "",
-                              assistValue: "none",
-                            })
-                          }
-                          className="accent-blue-600"
-                        />
-                        <span className="text-sm text-gray-700">{GOAL_TYPE_LABEL[type]}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {row.goalType === "normal" && (
-                    <div className="space-y-2">
-                      {/* 得点者 */}
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">得点者</label>
-                        <select
-                          value={row.scorerId}
-                          onChange={(e) =>
-                            updateGoalField(row.localId, { scorerId: e.target.value })
-                          }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                        >
-                          <option value="">（未選択）</option>
-                          {players.length > 0 && (
-                            <optgroup label="出場メンバー">
-                              {players.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
-                                  {m.displayName}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                          {others.length > 0 && (
-                            <optgroup label="その他メンバー">
-                              {others.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
-                                  {m.displayName}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                        </select>
-                      </div>
-
-                      {/* アシスト */}
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">アシスト</label>
-                        <select
-                          value={row.assistValue}
-                          onChange={(e) =>
-                            updateGoalField(row.localId, { assistValue: e.target.value })
-                          }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                        >
-                          <option value="none">{ASSIST_TYPE_LABEL.none}</option>
-                          <option value="unknown">{ASSIST_TYPE_LABEL.unknown}</option>
-                          {players.length > 0 && (
-                            <optgroup label="出場メンバー">
-                              {players.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
-                                  {m.displayName}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                          {others.length > 0 && (
-                            <optgroup label="その他メンバー">
-                              {others.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.uniformNumber != null ? `#${m.uniformNumber} ` : ""}
-                                  {m.displayName}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 出場メンバー */}
-        <div>
-          <p className="block text-sm font-medium text-gray-700 mb-2">出場メンバー</p>
-
-          {Array.from(selectedIds).map((id) => (
-            <input key={id} type="hidden" name="playerIds" value={id} />
-          ))}
-
-          {attendingMembers.length > 0 && (
-            <div className="mb-3">
-              <p className="text-xs text-gray-500 font-medium mb-1">参加予定</p>
-              <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-50">
-                {attendingMembers.map((m) => (
-                  <label key={m.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(m.id)}
-                      onChange={() => toggleMember(m.id)}
-                      className="w-4 h-4 rounded accent-blue-600"
-                    />
-                    <span className="text-xs text-gray-400 w-6 text-right shrink-0">
-                      {m.uniformNumber != null ? `#${m.uniformNumber}` : ""}
-                    </span>
-                    <span className="text-sm text-gray-800">{m.displayName}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {otherMembers.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">その他メンバー</p>
-              <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-50">
-                {otherMembers.map((m) => (
-                  <label key={m.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(m.id)}
-                      onChange={() => toggleMember(m.id)}
-                      className="w-4 h-4 rounded accent-blue-600"
-                    />
-                    <span className="text-xs text-gray-400 w-6 text-right shrink-0">
-                      {m.uniformNumber != null ? `#${m.uniformNumber}` : ""}
-                    </span>
-                    <span className="text-sm text-gray-800">{m.displayName}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* 出場メンバー hidden inputs */}
+        {Array.from(selectedIds).map((id) => (
+          <input key={id} type="hidden" name="playerIds" value={id} />
+        ))}
+        <MemberCheckList members={members} selectedIds={selectedIds} toggleMember={toggleMember} />
 
         {/* メモ */}
         <div>

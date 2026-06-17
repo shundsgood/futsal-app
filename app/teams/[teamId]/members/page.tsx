@@ -44,7 +44,7 @@ export default async function MembersPage({ params }: Props) {
           {members.map((m) => (
             <li
               key={m.id}
-              className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3"
+              className="bg-white rounded-xl border border-gray-200 px-4 py-3.5 flex items-center gap-3 min-h-[56px]"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm shrink-0">
                 {m.uniformNumber ?? "—"}
@@ -60,6 +60,12 @@ export default async function MembersPage({ params }: Props) {
               >
                 {STATUS_LABEL[m.membershipStatus] ?? m.membershipStatus}
               </span>
+              <Link
+                href={`/teams/${teamId}/members/${m.id}/edit`}
+                className="text-xs text-gray-400 hover:text-blue-600 shrink-0"
+              >
+                編集
+              </Link>
             </li>
           ))}
         </ul>

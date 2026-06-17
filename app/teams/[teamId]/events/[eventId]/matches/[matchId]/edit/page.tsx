@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { MatchEditForm } from "./MatchEditForm";
@@ -8,8 +9,8 @@ export default async function EditMatchPage({ params }: Props) {
   const { teamId, eventId, matchId } = await params;
 
   const [match, attendances, allMembers] = await Promise.all([
-    prisma.match.findFirst({
-      where: { id: matchId, eventId, event: { teamId } },
+    prisma.match.findUnique({
+      where: { id: matchId },
       include: {
         players: { select: { teamMemberId: true } },
         goals: { orderBy: { goalOrder: "asc" } },
@@ -25,7 +26,7 @@ export default async function EditMatchPage({ params }: Props) {
     }),
   ]);
 
-  if (!match) notFound();
+  if (!match || match.eventId !== eventId) notFound();
 
   const attendingIds = new Set(
     attendances.filter((a) => a.status === "attending").map((a) => a.teamMemberId),
@@ -49,6 +50,7 @@ export default async function EditMatchPage({ params }: Props) {
   return (
     <div className="space-y-5">
       <div>
+        <Link href={`/teams/${teamId}/events/${eventId}`} className="text-sm text-gray-500 hover:text-blue-600 mb-2 inline-block">← イベントに戻る</Link>
         <h2 className="text-lg font-bold text-gray-900 mb-0.5">試合を編集</h2>
         <p className="text-sm text-gray-500">第{match.matchOrder}試合 vs {match.opponentName}</p>
       </div>

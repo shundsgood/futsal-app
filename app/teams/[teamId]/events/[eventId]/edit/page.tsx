@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateEvent } from "@/lib/actions/event";
 import { EVENT_TYPE_LABEL } from "@/lib/constants";
+import { toDatetimeLocal } from "@/lib/utils";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
 
@@ -14,26 +16,19 @@ const EVENT_TYPES = [
   { value: "other", label: "その他" },
 ];
 
-function toDatetimeLocal(date: Date): string {
-  const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export default async function EditEventPage({ params }: Props) {
   const { teamId, eventId } = await params;
 
-  const event = await prisma.event.findFirst({ where: { id: eventId, teamId } });
-  if (!event) notFound();
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event || event.teamId !== teamId) notFound();
 
   const action = updateEvent.bind(null, eventId, teamId);
-
-  const isTournament =
-    event.eventType === "tournament" || event.eventType === "league";
 
   return (
     <div className="space-y-5">
       <div>
+        <Link href={`/teams/${teamId}/events/${eventId}`} className="text-sm text-gray-500 hover:text-blue-600 mb-2 inline-block">← イベントに戻る</Link>
         <h2 className="text-lg font-bold text-gray-900 mb-0.5">イベントを編集</h2>
         <p className="text-sm text-gray-500">{event.title}</p>
       </div>
@@ -139,13 +134,27 @@ export default async function EditEventPage({ params }: Props) {
           {/* 説明 */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              説明・備考
+              説明
             </label>
             <textarea
               id="description"
               name="description"
               rows={2}
               defaultValue={event.description ?? ""}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 備考 */}
+          <div>
+            <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">
+              備考
+            </label>
+            <textarea
+              id="note"
+              name="note"
+              rows={2}
+              defaultValue={event.note ?? ""}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

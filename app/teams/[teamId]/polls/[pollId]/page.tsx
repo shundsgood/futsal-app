@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { confirmPoll } from "@/lib/actions/event";
 import { reopenPoll } from "@/lib/actions/poll";
-import { EVENT_TYPE_LABEL } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, POLL_RESPONSE_LABEL, POLL_RESPONSE_COLOR } from "@/lib/constants";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
@@ -21,17 +21,6 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: "bg-red-100 text-red-600",
 };
 
-const RESPONSE_LABEL: Record<string, string> = {
-  available: "○",
-  maybe: "△",
-  unavailable: "×",
-};
-
-const RESPONSE_COLOR: Record<string, string> = {
-  available: "text-green-600 font-bold",
-  maybe: "text-yellow-500 font-bold",
-  unavailable: "text-red-500 font-bold",
-};
 
 export default async function PollDetailPage({ params }: Props) {
   const { teamId, pollId } = await params;
@@ -231,10 +220,10 @@ export default async function PollDetailPage({ params }: Props) {
                       <td key={opt.id} className="text-center px-3 py-2">
                         {response ? (
                           <span
-                            className={RESPONSE_COLOR[response.responseType] ?? "text-gray-400"}
+                            className={POLL_RESPONSE_COLOR[response.responseType] ?? "text-gray-400"}
                             title={response.comment ?? undefined}
                           >
-                            {RESPONSE_LABEL[response.responseType] ?? "?"}
+                            {POLL_RESPONSE_LABEL[response.responseType] ?? "?"}
                           </span>
                         ) : (
                           <span className="text-gray-300">—</span>

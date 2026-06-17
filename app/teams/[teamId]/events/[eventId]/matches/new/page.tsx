@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { MatchForm } from "./MatchForm";
@@ -35,6 +36,7 @@ export default async function NewMatchPage({ params }: Props) {
 
   return (
     <div>
+      <Link href={`/teams/${teamId}/events/${eventId}`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">← イベントに戻る</Link>
       <h2 className="text-lg font-bold text-gray-900 mb-0.5">試合結果を追加</h2>
       <p className="text-sm text-gray-500 mb-4">{event.title}</p>
 

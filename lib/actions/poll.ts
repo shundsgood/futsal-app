@@ -31,9 +31,14 @@ export async function createPoll(teamId: string, formData: FormData) {
     const note = (formData.get(`note_${i}`) as string | null)?.trim() || null;
 
     if (start) {
+      const startDate = new Date(start);
+      const endDate = end ? new Date(end) : null;
+      if (endDate && endDate <= startDate) {
+        throw new Error(`候補日${i + 1}: 終了日時は開始日時より後にしてください`);
+      }
       options.push({
-        startDatetime: new Date(start),
-        endDatetime: end ? new Date(end) : null,
+        startDatetime: startDate,
+        endDatetime: endDate,
         venueName: venue,
         note,
         displayOrder: i,
@@ -69,37 +74,41 @@ export async function submitPollResponse(
 ) {
   const user = await getCurrentUser();
 
-  const member = await prisma.teamMember.findFirst({
-    where: { teamId, userId: user.id },
-  });
+  const [member, poll] = await Promise.all([
+    prisma.teamMember.findFirst({ where: { teamId, userId: user.id } }),
+    prisma.schedulePoll.findFirst({ where: { id: pollId, teamId } }),
+  ]);
   if (!member) throw new Error("このチームのメンバーではありません");
+  if (!poll) throw new Error("日程調整が見つかりません");
 
   const options = await prisma.schedulePollOption.findMany({
     where: { schedulePollId: pollId },
   });
 
-  for (const option of options) {
-    const responseType = formData.get(`response_${option.id}`) as string | null;
-    const comment = (formData.get(`comment_${option.id}`) as string | null)?.trim() || null;
-
-    if (!responseType) continue;
-
-    await prisma.schedulePollResponse.upsert({
-      where: {
-        schedulePollOptionId_teamMemberId: {
-          schedulePollOptionId: option.id,
-          teamMemberId: member.id,
-        },
-      },
-      update: { responseType, comment },
-      create: {
-        schedulePollOptionId: option.id,
-        teamMemberId: member.id,
-        responseType,
-        comment,
-      },
-    });
-  }
+  await prisma.$transaction(
+    options.flatMap((option) => {
+      const responseType = formData.get(`response_${option.id}`) as string | null;
+      if (!responseType) return [];
+      const comment = (formData.get(`comment_${option.id}`) as string | null)?.trim() || null;
+      return [
+        prisma.schedulePollResponse.upsert({
+          where: {
+            schedulePollOptionId_teamMemberId: {
+              schedulePollOptionId: option.id,
+              teamMemberId: member.id,
+            },
+          },
+          update: { responseType, comment },
+          create: {
+            schedulePollOptionId: option.id,
+            teamMemberId: member.id,
+            responseType,
+            comment,
+          },
+        }),
+      ];
+    }),
+  );
 
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }
@@ -134,9 +143,14 @@ export async function updatePollOptions(pollId: string, teamId: string, formData
     const existingId = (formData.get(`existingOptionId_${i}`) as string | null) || null;
 
     if (start) {
+      const startDate = new Date(start);
+      const endDate = end ? new Date(end) : null;
+      if (endDate && endDate <= startDate) {
+        throw new Error(`候補日${i + 1}: 終了日時は開始日時より後にしてください`);
+      }
       const optionData: OptionFields = {
-        startDatetime: new Date(start),
-        endDatetime: end ? new Date(end) : null,
+        startDatetime: startDate,
+        endDatetime: endDate,
         venueName: venue,
         note,
         displayOrder: i,

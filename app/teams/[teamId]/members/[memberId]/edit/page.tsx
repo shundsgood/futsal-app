@@ -1,17 +1,32 @@
 import Link from "next/link";
-import { createMember } from "@/lib/actions/member";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { updateMember } from "@/lib/actions/member";
 
-type Props = { params: Promise<{ teamId: string }> };
+type Props = { params: Promise<{ teamId: string; memberId: string }> };
 
-export default async function NewMemberPage({ params }: Props) {
-  const { teamId } = await params;
+const MEMBERSHIP_STATUS_LABEL: Record<string, string> = {
+  active: "在籍中",
+  inactive: "休止中",
+  left: "退団済み",
+};
 
-  const action = createMember.bind(null, teamId);
+export default async function EditMemberPage({ params }: Props) {
+  const { teamId, memberId } = await params;
+
+  const member = await prisma.teamMember.findUnique({ where: { id: memberId } });
+  if (!member || member.teamId !== teamId) notFound();
+
+  const action = updateMember.bind(null, memberId, teamId);
+
+  const joinedAtValue = member.joinedAt
+    ? new Date(member.joinedAt).toISOString().split("T")[0]
+    : "";
 
   return (
     <div>
       <Link href={`/teams/${teamId}/members`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">← メンバー一覧に戻る</Link>
-      <h2 className="text-lg font-bold text-gray-900 mb-4">メンバー追加</h2>
+      <h2 className="text-lg font-bold text-gray-900 mb-4">メンバーを編集</h2>
 
       <form action={action} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
         <div>
@@ -23,6 +38,7 @@ export default async function NewMemberPage({ params }: Props) {
             name="displayName"
             type="text"
             required
+            defaultValue={member.displayName}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -38,6 +54,7 @@ export default async function NewMemberPage({ params }: Props) {
               type="number"
               min={0}
               max={99}
+              defaultValue={member.uniformNumber ?? ""}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -48,6 +65,7 @@ export default async function NewMemberPage({ params }: Props) {
             <select
               id="position"
               name="position"
+              defaultValue={member.position ?? ""}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">未設定</option>
@@ -68,6 +86,7 @@ export default async function NewMemberPage({ params }: Props) {
             <select
               id="uniformSize"
               name="uniformSize"
+              defaultValue={member.uniformSize ?? ""}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">未設定</option>
@@ -87,9 +106,26 @@ export default async function NewMemberPage({ params }: Props) {
               id="joinedAt"
               name="joinedAt"
               type="date"
+              defaultValue={joinedAtValue}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="membershipStatus" className="block text-sm font-medium text-gray-700 mb-1">
+            在籍ステータス
+          </label>
+          <select
+            id="membershipStatus"
+            name="membershipStatus"
+            defaultValue={member.membershipStatus}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            {Object.entries(MEMBERSHIP_STATUS_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -100,6 +136,7 @@ export default async function NewMemberPage({ params }: Props) {
             id="notes"
             name="notes"
             rows={2}
+            defaultValue={member.notes ?? ""}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -108,7 +145,7 @@ export default async function NewMemberPage({ params }: Props) {
           type="submit"
           className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition"
         >
-          追加する
+          保存する
         </button>
       </form>
     </div>

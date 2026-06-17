@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createMatch } from "@/lib/actions/match";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
+import { GoalRows, GoalRow, GoalType } from "../_components/GoalRows";
+import { MemberCheckList } from "../_components/MemberCheckList";
 
 type Member = {
   id: string;
@@ -25,14 +27,37 @@ function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
 }
 
 export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props) {
+  const nextLocalId = useRef(0);
   const [ourScore, setOurScore] = useState(0);
   const [oppScore, setOppScore] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set(members.filter((m) => m.isAttending).map((m) => m.id)),
   );
+  const [goals, setGoals] = useState<GoalRow[]>([]);
 
   const result = calcResult(ourScore, oppScore);
   const action = createMatch.bind(null, eventId, teamId);
+
+  const handleOurScoreChange = (value: string) => {
+    const score = Math.max(0, parseInt(value) || 0);
+    setOurScore(score);
+    setGoals((prev) => {
+      if (score <= prev.length) return prev.slice(0, score);
+      return [
+        ...prev,
+        ...Array.from({ length: score - prev.length }, () => ({
+          localId: nextLocalId.current++,
+          goalType: "normal" as GoalType,
+          scorerId: "",
+          assistValue: "none",
+        })),
+      ];
+    });
+  };
+
+  const updateGoalField = (localId: number, patch: Partial<Omit<GoalRow, "localId">>) => {
+    setGoals((prev) => prev.map((g) => (g.localId === localId ? { ...g, ...patch } : g)));
+  };
 
   const toggleMember = (id: string) => {
     setSelectedIds((prev) => {
@@ -43,8 +68,8 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
     });
   };
 
-  const attendingMembers = members.filter((m) => m.isAttending);
-  const otherMembers = members.filter((m) => !m.isAttending);
+  const players = members.filter((m) => selectedIds.has(m.id));
+  const others = members.filter((m) => !selectedIds.has(m.id));
 
   return (
     <form action={action} className="space-y-5">
@@ -89,8 +114,9 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
               name="ourScore"
               type="number"
               min={0}
+              max={99}
               value={ourScore}
-              onChange={(e) => setOurScore(Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={(e) => handleOurScoreChange(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -101,76 +127,27 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
               name="opponentScore"
               type="number"
               min={0}
+              max={99}
               value={oppScore}
               onChange={(e) => setOppScore(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex-1 mt-4">
-            <span
-              className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${
-                MATCH_RESULT_COLOR[result]
-              }`}
-            >
+            <span className={`block text-center text-sm font-bold px-2 py-2 rounded-lg ${MATCH_RESULT_COLOR[result]}`}>
               {MATCH_RESULT_LABEL[result]}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 出場メンバー */}
-      <div>
-        <p className="block text-sm font-medium text-gray-700 mb-2">出場メンバー</p>
+      <GoalRows goals={goals} players={players} others={others} updateGoalField={updateGoalField} />
 
-        {/* hidden inputs for selected members */}
-        {Array.from(selectedIds).map((id) => (
-          <input key={id} type="hidden" name="playerIds" value={id} />
-        ))}
-
-        {attendingMembers.length > 0 && (
-          <div className="mb-3">
-            <p className="text-xs text-gray-500 font-medium mb-1">参加予定</p>
-            <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-50">
-              {attendingMembers.map((m) => (
-                <label key={m.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(m.id)}
-                    onChange={() => toggleMember(m.id)}
-                    className="w-4 h-4 rounded accent-blue-600"
-                  />
-                  <span className="text-xs text-gray-400 w-6 text-right shrink-0">
-                    {m.uniformNumber != null ? `#${m.uniformNumber}` : ""}
-                  </span>
-                  <span className="text-sm text-gray-800">{m.displayName}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {otherMembers.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-500 font-medium mb-1">その他メンバー</p>
-            <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-50">
-              {otherMembers.map((m) => (
-                <label key={m.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(m.id)}
-                    onChange={() => toggleMember(m.id)}
-                    className="w-4 h-4 rounded accent-blue-600"
-                  />
-                  <span className="text-xs text-gray-400 w-6 text-right shrink-0">
-                    {m.uniformNumber != null ? `#${m.uniformNumber}` : ""}
-                  </span>
-                  <span className="text-sm text-gray-800">{m.displayName}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* 出場メンバー hidden inputs */}
+      {Array.from(selectedIds).map((id) => (
+        <input key={id} type="hidden" name="playerIds" value={id} />
+      ))}
+      <MemberCheckList members={members} selectedIds={selectedIds} toggleMember={toggleMember} />
 
       {/* メモ */}
       <div>

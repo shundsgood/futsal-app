@@ -13,8 +13,8 @@ export function TeamNav({ teamId }: Props) {
   const navItems = [
     { href: `/teams/${teamId}`, label: "ホーム" },
     { href: `/teams/${teamId}/members`, label: "メンバー" },
-    { href: `/teams/${teamId}/polls`, label: "日程調整" },
-    { href: `/teams/${teamId}/events`, label: "イベント" },
+    { href: `/teams/${teamId}/polls`, label: "日程" },
+    { href: `/teams/${teamId}/events`, label: "活動" },
     { href: `/teams/${teamId}/stats`, label: "成績" },
   ];
 

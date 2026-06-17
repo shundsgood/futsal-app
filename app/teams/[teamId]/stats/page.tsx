@@ -128,8 +128,8 @@ export default async function StatsPage({ params }: Props) {
 
   // 個人成績
   const matchCountMap = new Map(matchCounts.map((r) => [r.teamMemberId, r._count.id]));
-  const goalCountMap = new Map(goalCounts.map((r) => [r.scorerId!, r._count.id]));
-  const assistCountMap = new Map(assistCounts.map((r) => [r.assistId!, r._count.id]));
+  const goalCountMap = new Map(goalCounts.map((r) => [r.scorerId as string, r._count.id]));
+  const assistCountMap = new Map(assistCounts.map((r) => [r.assistId as string, r._count.id]));
 
   const memberStats: MemberStat[] = members.map((m) => {
     const played = matchCountMap.get(m.id) ?? 0;

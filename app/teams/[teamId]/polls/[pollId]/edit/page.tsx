@@ -1,14 +1,10 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PollEditForm } from "./PollEditForm";
+import { toDatetimeLocal } from "@/lib/utils";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
-
-function toDatetimeLocal(date: Date): string {
-  const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export default async function EditPollPage({ params }: Props) {
   const { teamId, pollId } = await params;
@@ -32,6 +28,7 @@ export default async function EditPollPage({ params }: Props) {
   return (
     <div className="space-y-5">
       <div>
+        <Link href={`/teams/${teamId}/polls/${pollId}`} className="text-sm text-gray-500 hover:text-blue-600 mb-2 inline-block">← 日程調整に戻る</Link>
         <h2 className="text-lg font-bold text-gray-900 mb-0.5">候補日を編集</h2>
         <p className="text-sm text-gray-500">{poll.title}</p>
       </div>

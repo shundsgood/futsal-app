@@ -36,22 +36,55 @@ export async function createMatch(eventId: string, teamId: string, formData: For
     throw new Error("得点は数値で入力してください");
   }
   if (ourScore < 0 || opponentScore < 0) throw new Error("得点は0以上で入力してください");
+  if (ourScore > 99 || opponentScore > 99) throw new Error("得点は99以下で入力してください");
+
+  if (playerIds.length > 0) {
+    const validCount = await prisma.teamMember.count({ where: { id: { in: playerIds }, teamId } });
+    if (validCount !== playerIds.length) throw new Error("無効なメンバーが含まれています");
+  }
 
   const result = calcResult(ourScore, opponentScore);
 
-  await prisma.match.create({
-    data: {
-      eventId,
-      matchOrder,
-      opponentName,
-      ourScore,
-      opponentScore,
-      result,
-      memo,
-      players: {
-        create: playerIds.map((teamMemberId) => ({ teamMemberId })),
+  const goals: Array<{
+    goalType: string;
+    scorerId: string | null;
+    assistType: string;
+    assistId: string | null;
+    goalOrder: number;
+  }> = [];
+  let gi = 0;
+  while (formData.has(`goalType_${gi}`)) {
+    const goalType = formData.get(`goalType_${gi}`) as string;
+    const scorerId =
+      goalType === "normal" ? ((formData.get(`scorerId_${gi}`) as string | null) || null) : null;
+    const { assistType, assistId } =
+      goalType === "normal"
+        ? parseAssist(formData.get(`assistValue_${gi}`) as string | null)
+        : { assistType: "none", assistId: null };
+    goals.push({ goalType, scorerId, assistType, assistId, goalOrder: gi + 1 });
+    gi++;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const match = await tx.match.create({
+      data: {
+        eventId,
+        matchOrder,
+        opponentName,
+        ourScore,
+        opponentScore,
+        result,
+        memo,
+        players: {
+          create: playerIds.map((teamMemberId) => ({ teamMemberId })),
+        },
       },
-    },
+    });
+    if (goals.length > 0) {
+      await tx.goal.createMany({
+        data: goals.map((g) => ({ matchId: match.id, ...g })),
+      });
+    }
   });
 
   redirect(`/teams/${teamId}/events/${eventId}`);
@@ -85,6 +118,12 @@ export async function updateMatch(
     throw new Error("得点は数値で入力してください");
   }
   if (ourScore < 0 || opponentScore < 0) throw new Error("得点は0以上で入力してください");
+  if (ourScore > 99 || opponentScore > 99) throw new Error("得点は99以下で入力してください");
+
+  if (playerIds.length > 0) {
+    const validCount = await prisma.teamMember.count({ where: { id: { in: playerIds }, teamId } });
+    if (validCount !== playerIds.length) throw new Error("無効なメンバーが含まれています");
+  }
 
   const result = calcResult(ourScore, opponentScore);
 

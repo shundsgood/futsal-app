@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
@@ -35,6 +36,7 @@ export default async function RespondPage({ params }: Props) {
 
   return (
     <div>
+      <Link href={`/teams/${teamId}/polls/${pollId}`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">← 日程調整に戻る</Link>
       <h2 className="text-lg font-bold text-gray-900 mb-0.5">{poll.title}</h2>
       <p className="text-sm text-gray-500 mb-4">
         {member?.displayName ?? user.displayName} として回答

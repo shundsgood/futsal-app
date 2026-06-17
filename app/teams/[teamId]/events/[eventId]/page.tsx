@@ -1,22 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
+import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL, ATTENDANCE_LABEL, ATTENDANCE_COLOR } from "@/lib/constants";
 import { DeleteEventButton } from "./DeleteEventButton";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
 
-const ATTENDANCE_LABEL: Record<string, string> = {
-  attending: "参加",
-  undecided: "未定",
-  absent: "不参加",
-};
-
-const ATTENDANCE_COLOR: Record<string, string> = {
-  attending: "text-green-600 font-bold",
-  undecided: "text-yellow-500 font-bold",
-  absent: "text-red-500 font-bold",
-};
 
 export default async function EventDetailPage({ params }: Props) {
   const { teamId, eventId } = await params;

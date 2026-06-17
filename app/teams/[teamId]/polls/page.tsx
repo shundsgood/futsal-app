@@ -5,14 +5,12 @@ type Props = { params: Promise<{ teamId: string }> };
 
 const STATUS_LABEL: Record<string, string> = {
   open: "回答受付中",
-  closed: "回答締切",
   confirmed: "確定済み",
   cancelled: "中止",
 };
 
 const STATUS_COLOR: Record<string, string> = {
   open: "bg-blue-100 text-blue-700",
-  closed: "bg-gray-100 text-gray-600",
   confirmed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-600",
 };

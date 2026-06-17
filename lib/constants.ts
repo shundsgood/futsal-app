@@ -39,3 +39,27 @@ export const ASSIST_TYPE_LABEL: Record<string, string> = {
   none: "アシストなし",
   unknown: "不明",
 };
+
+export const ATTENDANCE_LABEL: Record<string, string> = {
+  attending: "参加",
+  undecided: "未定",
+  absent: "不参加",
+};
+
+export const ATTENDANCE_COLOR: Record<string, string> = {
+  attending: "text-green-600 font-bold",
+  undecided: "text-yellow-500 font-bold",
+  absent: "text-red-500 font-bold",
+};
+
+export const POLL_RESPONSE_LABEL: Record<string, string> = {
+  available: "○",
+  maybe: "△",
+  unavailable: "×",
+};
+
+export const POLL_RESPONSE_COLOR: Record<string, string> = {
+  available: "text-green-600 font-bold",
+  maybe: "text-yellow-500 font-bold",
+  unavailable: "text-red-500 font-bold",
+};
