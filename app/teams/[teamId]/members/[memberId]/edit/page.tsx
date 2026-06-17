@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateMember } from "@/lib/actions/member";
+import { DeleteMemberButton } from "./_components/DeleteMemberButton";
 
 type Props = { params: Promise<{ teamId: string; memberId: string }> };
 
@@ -148,6 +149,11 @@ export default async function EditMemberPage({ params }: Props) {
           保存する
         </button>
       </form>
+
+      <div className="mt-4">
+        <hr className="border-gray-200 mb-4" />
+        <DeleteMemberButton memberId={memberId} teamId={teamId} />
+      </div>
     </div>
   );
 }

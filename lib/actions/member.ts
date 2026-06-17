@@ -37,6 +37,22 @@ export async function createMember(teamId: string, formData: FormData) {
   redirect(`/teams/${teamId}/members`);
 }
 
+export async function deleteMember(memberId: string, teamId: string) {
+  const member = await prisma.teamMember.findFirst({ where: { id: memberId, teamId } });
+  if (!member) throw new Error("メンバーが見つかりません");
+
+  await prisma.$transaction([
+    prisma.goal.updateMany({ where: { scorerId: memberId }, data: { scorerId: null } }),
+    prisma.goal.updateMany({ where: { assistId: memberId }, data: { assistId: null } }),
+    prisma.matchPlayer.deleteMany({ where: { teamMemberId: memberId } }),
+    prisma.eventAttendance.deleteMany({ where: { teamMemberId: memberId } }),
+    prisma.schedulePollResponse.deleteMany({ where: { teamMemberId: memberId } }),
+    prisma.teamMember.delete({ where: { id: memberId } }),
+  ]);
+
+  redirect(`/teams/${teamId}/members`);
+}
+
 export async function updateMember(memberId: string, teamId: string, formData: FormData) {
   const member = await prisma.teamMember.findFirst({ where: { id: memberId, teamId } });
   if (!member) throw new Error("メンバーが見つかりません");
