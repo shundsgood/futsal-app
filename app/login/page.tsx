@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn, signUp } from "@/lib/actions/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -12,16 +14,15 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setPending(true);
-    try {
-      const formData = new FormData(e.currentTarget);
-      if (mode === "login") {
-        await signIn(formData);
-      } else {
-        await signUp(formData);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+    const formData = new FormData(e.currentTarget);
+    const result = mode === "login"
+      ? await signIn(formData)
+      : await signUp(formData);
+    if (result?.error) {
+      setError(result.error);
       setPending(false);
+    } else {
+      router.push("/");
     }
   };
 
