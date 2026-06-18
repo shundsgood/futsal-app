@@ -99,38 +99,25 @@ export default async function MatchesPage({ params }: Props) {
                         </span>
                       </td>
 
-                      {/* スコア */}
-                      <td className="px-2 py-2.5 text-center font-bold tabular-nums whitespace-nowrap text-gray-900">
-                        {match.ourScore} - {match.opponentScore}
-                      </td>
-
-                      {/* 対戦相手（URLがあればリンク化） */}
-                      <td className="px-3 py-2.5 whitespace-nowrap">
+                      {/* スコア（URLがあればリンク化） */}
+                      <td className="px-2 py-2.5 text-center font-bold tabular-nums whitespace-nowrap">
                         {match.matchUrl ? (
                           <a
                             href={match.matchUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                            className="text-blue-600 hover:underline"
                           >
-                            {match.opponentName}
-                            <svg
-                              className="w-3 h-3 text-blue-400 shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                              />
-                            </svg>
+                            {match.ourScore} - {match.opponentScore}
                           </a>
                         ) : (
-                          <span className="text-gray-800">{match.opponentName}</span>
+                          <span className="text-gray-900">{match.ourScore} - {match.opponentScore}</span>
                         )}
+                      </td>
+
+                      {/* 対戦相手 */}
+                      <td className="px-3 py-2.5 whitespace-nowrap text-gray-800">
+                        {match.opponentName}
                       </td>
 
                       {/* 得点者 */}
