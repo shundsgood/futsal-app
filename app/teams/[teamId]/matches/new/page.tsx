@@ -148,6 +148,7 @@ export default async function NewMatchFromListPage({ params, searchParams }: Pro
                       month: "numeric",
                       day: "numeric",
                       weekday: "short",
+                      timeZone: "Asia/Tokyo",
                     })}
                   </span>
                   {event.eventType && (

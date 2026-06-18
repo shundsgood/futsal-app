@@ -25,11 +25,18 @@ type Props = {
   options: OptionData[];
 };
 
+const TZ = "Asia/Tokyo";
+
+function isDateOnlyJST(date: Date): boolean {
+  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return jst.getUTCHours() === 0 && jst.getUTCMinutes() === 0;
+}
+
 function formatDatetime(start: Date, end: Date | null): React.ReactNode {
-  const isDateOnly = start.getHours() === 0 && start.getMinutes() === 0 && !end;
-  const startStr = isDateOnly
-    ? start.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" })
-    : start.toLocaleString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit" });
+  const dateOnly = isDateOnlyJST(start) && !end;
+  const startStr = dateOnly
+    ? start.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", timeZone: TZ })
+    : start.toLocaleString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: TZ });
 
   return (
     <>
@@ -37,7 +44,7 @@ function formatDatetime(start: Date, end: Date | null): React.ReactNode {
       {end && (
         <span className="text-gray-500">
           {" "}〜{" "}
-          {end.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}
+          {end.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: TZ })}
         </span>
       )}
     </>

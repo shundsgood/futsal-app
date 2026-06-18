@@ -142,6 +142,7 @@ export function PollList({ teamId, polls }: Props) {
                           {new Date(earliest.startDatetime).toLocaleDateString("ja-JP", {
                             month: "numeric",
                             day: "numeric",
+                            timeZone: "Asia/Tokyo",
                           })}
                         </span>
                       )}
@@ -151,6 +152,7 @@ export function PollList({ teamId, polls }: Props) {
                           {new Date(poll.responseDeadline).toLocaleDateString("ja-JP", {
                             month: "numeric",
                             day: "numeric",
+                            timeZone: "Asia/Tokyo",
                           })}
                         </span>
                       )}

@@ -25,6 +25,8 @@ const CHOICES = [
   { value: "unavailable", label: "×", selected: "border-red-400 bg-red-50 text-red-500", unselected: "border-gray-200 text-gray-300" },
 ] as const;
 
+const TZ = "Asia/Tokyo";
+
 function formatDatetime(dt: Date) {
   return new Date(dt).toLocaleString("ja-JP", {
     month: "numeric",
@@ -32,6 +34,7 @@ function formatDatetime(dt: Date) {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TZ,
   });
 }
 
@@ -39,6 +42,7 @@ function formatTime(dt: Date) {
   return new Date(dt).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TZ,
   });
 }
 

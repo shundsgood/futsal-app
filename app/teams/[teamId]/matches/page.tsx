@@ -89,6 +89,7 @@ export default async function MatchesPage({ params }: Props) {
                             ? new Date(match.event.startDatetime).toLocaleDateString("ja-JP", {
                                 month: "numeric",
                                 day: "numeric",
+                                timeZone: "Asia/Tokyo",
                               }) + ` 第${match.matchOrder}試合`
                             : `第${match.matchOrder}試合`}
                         </p>

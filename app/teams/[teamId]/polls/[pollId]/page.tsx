@@ -81,6 +81,7 @@ export default async function PollDetailPage({ params }: Props) {
               day: "numeric",
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "Asia/Tokyo",
             })}
           </p>
         )}
@@ -154,6 +155,7 @@ export default async function PollDetailPage({ params }: Props) {
                       {new Date(opt.startDatetime).toLocaleDateString("ja-JP", {
                         month: "numeric",
                         day: "numeric",
+                        timeZone: "Asia/Tokyo",
                       })}
                     </span>
                   </th>

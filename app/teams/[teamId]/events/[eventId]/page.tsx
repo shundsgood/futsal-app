@@ -75,6 +75,7 @@ export default async function EventDetailPage({ params }: Props) {
               weekday: "short",
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "Asia/Tokyo",
             })}
             {event.endDatetime && (
               <span className="text-gray-400">
@@ -82,6 +83,7 @@ export default async function EventDetailPage({ params }: Props) {
                 {new Date(event.endDatetime).toLocaleTimeString("ja-JP", {
                   hour: "2-digit",
                   minute: "2-digit",
+                  timeZone: "Asia/Tokyo",
                 })}
               </span>
             )}
