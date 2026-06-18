@@ -197,6 +197,44 @@ export async function updatePollOptions(
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }
 
+export async function updatePollInfo(
+  pollId: string,
+  teamId: string,
+  formData: FormData,
+) {
+  const poll = await prisma.schedulePoll.findFirst({ where: { id: pollId, teamId } });
+  if (!poll) throw new Error("日程調整が見つかりません");
+
+  const title = (formData.get("title") as string).trim();
+  if (!title) throw new Error("タイトルは必須です");
+
+  const description = (formData.get("description") as string | null)?.trim() || null;
+  const eventType = (formData.get("eventType") as string | null) || null;
+  const responseDeadline = (formData.get("responseDeadline") as string | null) || null;
+
+  await prisma.schedulePoll.update({
+    where: { id: pollId },
+    data: {
+      title,
+      description,
+      eventType,
+      responseDeadline: responseDeadline ? new Date(responseDeadline) : null,
+    },
+  });
+
+  revalidateTag(`team-${teamId}`, "max");
+  redirect(`/teams/${teamId}/polls/${pollId}`);
+}
+
+export async function deletePolls(pollIds: string[], teamId: string) {
+  if (pollIds.length === 0) return;
+  await prisma.schedulePoll.deleteMany({
+    where: { id: { in: pollIds }, teamId },
+  });
+  revalidateTag(`team-${teamId}`, "max");
+  redirect(`/teams/${teamId}/polls`);
+}
+
 export async function reopenPoll(pollId: string, teamId: string) {
   const poll = await prisma.schedulePoll.findFirst({
     where: { id: pollId, teamId },

@@ -88,21 +88,19 @@ export default async function PollDetailPage({ params }: Props) {
         {poll.status !== "cancelled" && (
           <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
             {poll.status === "open" && (
-              <>
-                <Link
-                  href={`/teams/${teamId}/polls/${pollId}/respond`}
-                  className="block w-full text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  回答する
-                </Link>
-                <Link
-                  href={`/teams/${teamId}/polls/${pollId}/edit`}
-                  className="block w-full text-center border border-gray-300 text-gray-600 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition"
-                >
-                  候補日を編集
-                </Link>
-              </>
+              <Link
+                href={`/teams/${teamId}/polls/${pollId}/respond`}
+                className="block w-full text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                回答する
+              </Link>
             )}
+            <Link
+              href={`/teams/${teamId}/polls/${pollId}/edit`}
+              className="block w-full text-center border border-gray-300 text-gray-600 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition"
+            >
+              編集
+            </Link>
             {poll.status === "confirmed" && (
               <form action={reopenPoll.bind(null, pollId, teamId)}>
                 <SubmitButton label="回答受付中に戻す" />
