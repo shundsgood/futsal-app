@@ -154,6 +154,7 @@ export function MatchEditForm({
                 max={99}
                 value={ourScore}
                 onChange={(e) => handleOurScoreChange(e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -167,6 +168,7 @@ export function MatchEditForm({
                 max={99}
                 value={oppScore}
                 onChange={(e) => setOppScore(Math.max(0, parseInt(e.target.value) || 0))}
+                onFocus={(e) => e.target.select()}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
