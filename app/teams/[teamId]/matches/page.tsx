@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
 
@@ -7,20 +8,24 @@ type Props = { params: Promise<{ teamId: string }> };
 export default async function MatchesPage({ params }: Props) {
   const { teamId } = await params;
 
-  const matches = await prisma.match.findMany({
-    where: { teamId },
-    include: {
-      event: { select: { id: true, title: true, startDatetime: true, venueName: true } },
-      goals: {
-        include: { scorer: { select: { displayName: true } } },
-        orderBy: { goalOrder: "asc" },
+  const matches = await unstable_cache(
+    async () => prisma.match.findMany({
+      where: { teamId },
+      include: {
+        event: { select: { id: true, title: true, startDatetime: true, venueName: true } },
+        goals: {
+          include: { scorer: { select: { displayName: true } } },
+          orderBy: { goalOrder: "asc" },
+        },
       },
-    },
-    orderBy: [
-      { event: { startDatetime: "desc" } },
-      { matchOrder: "asc" },
-    ],
-  });
+      orderBy: [
+        { event: { startDatetime: "desc" } },
+        { matchOrder: "asc" },
+      ],
+    }),
+    [`matches-${teamId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   const returnTo = `/teams/${teamId}/matches`;
 

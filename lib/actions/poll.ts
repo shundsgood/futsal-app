@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -65,6 +66,7 @@ export async function createPoll(teamId: string, formData: FormData) {
     },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/polls/${poll.id}`);
 }
 
@@ -111,6 +113,7 @@ export async function submitPollResponse(
     }),
   );
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }
 
@@ -190,6 +193,7 @@ export async function updatePollOptions(
     }
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }
 
@@ -208,5 +212,6 @@ export async function reopenPoll(pollId: string, teamId: string) {
     });
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }

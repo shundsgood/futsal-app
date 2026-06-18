@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ teamId: string }> };
@@ -18,14 +19,18 @@ const STATUS_COLOR: Record<string, string> = {
 export default async function PollsPage({ params }: Props) {
   const { teamId } = await params;
 
-  const polls = await prisma.schedulePoll.findMany({
-    where: { teamId },
-    include: {
-      options: { orderBy: { startDatetime: "asc" }, take: 1 },
-      _count: { select: { options: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const polls = await unstable_cache(
+    async () => prisma.schedulePoll.findMany({
+      where: { teamId },
+      include: {
+        options: { orderBy: { startDatetime: "asc" }, take: 1 },
+        _count: { select: { options: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    [`polls-${teamId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   return (
     <div>

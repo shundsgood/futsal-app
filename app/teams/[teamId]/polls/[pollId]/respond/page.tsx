@@ -10,16 +10,15 @@ export default async function RespondPage({ params }: Props) {
   const { teamId, pollId } = await params;
   const user = await getCurrentUser();
 
-  const poll = await prisma.schedulePoll.findUnique({
-    where: { id: pollId },
-    include: { options: { orderBy: { startDatetime: "asc" } } },
-  });
+  const [poll, member] = await Promise.all([
+    prisma.schedulePoll.findUnique({
+      where: { id: pollId },
+      include: { options: { orderBy: { startDatetime: "asc" } } },
+    }),
+    prisma.teamMember.findFirst({ where: { teamId, userId: user.id } }),
+  ]);
 
   if (!poll || poll.teamId !== teamId) notFound();
-
-  const member = await prisma.teamMember.findFirst({
-    where: { teamId, userId: user.id },
-  });
 
   const existingResponses = member
     ? await prisma.schedulePollResponse.findMany({

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 function parseAssist(assistValue: string | null): { assistType: string; assistId: string | null } {
@@ -93,6 +94,7 @@ export async function createMatch(eventId: string, teamId: string, formData: For
     }
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   const returnTo = (formData.get("returnTo") as string | null) || `/teams/${teamId}/events/${eventId}`;
   redirect(returnTo);
 }
@@ -128,6 +130,7 @@ export async function createStandaloneMatch(teamId: string, formData: FormData) 
     }
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   const returnTo = (formData.get("returnTo") as string | null) || `/teams/${teamId}/matches`;
   redirect(returnTo);
 }
@@ -168,6 +171,7 @@ export async function updateMatch(
     }
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   const fallback = eventId ? `/teams/${teamId}/events/${eventId}` : `/teams/${teamId}/matches`;
   const returnTo = (formData.get("returnTo") as string | null) || fallback;
   redirect(returnTo);
@@ -179,5 +183,6 @@ export async function deleteMatch(matchId: string, eventId: string | null, teamI
 
   await prisma.match.delete({ where: { id: matchId } });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(eventId ? `/teams/${teamId}/events/${eventId}` : `/teams/${teamId}/matches`);
 }

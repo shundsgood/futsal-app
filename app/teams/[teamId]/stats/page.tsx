@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ teamId: string }> };
@@ -82,39 +83,35 @@ function RankingList({
 export default async function StatsPage({ params }: Props) {
   const { teamId } = await params;
 
-  const [members, matches, matchCounts, goalCounts, assistCounts] = await Promise.all([
-    prisma.teamMember.findMany({
-      where: { teamId, membershipStatus: { not: "left" } },
-      orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
-    }),
-    prisma.match.findMany({
-      where: { teamId },
-      select: { result: true, ourScore: true, opponentScore: true },
-    }),
-    prisma.matchPlayer.groupBy({
-      by: ["teamMemberId"],
-      where: { match: { teamId } },
-      _count: { id: true },
-    }),
-    prisma.goal.groupBy({
-      by: ["scorerId"],
-      where: {
-        goalType: "normal",
-        scorerId: { not: null },
-        match: { teamId },
-      },
-      _count: { id: true },
-    }),
-    prisma.goal.groupBy({
-      by: ["assistId"],
-      where: {
-        assistType: "member",
-        assistId: { not: null },
-        match: { teamId },
-      },
-      _count: { id: true },
-    }),
-  ]);
+  const [members, matches, matchCounts, goalCounts, assistCounts] = await unstable_cache(
+    async () => Promise.all([
+      prisma.teamMember.findMany({
+        where: { teamId, membershipStatus: { not: "left" } },
+        orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
+      }),
+      prisma.match.findMany({
+        where: { teamId },
+        select: { result: true, ourScore: true, opponentScore: true },
+      }),
+      prisma.matchPlayer.groupBy({
+        by: ["teamMemberId"],
+        where: { match: { teamId } },
+        _count: { id: true },
+      }),
+      prisma.goal.groupBy({
+        by: ["scorerId"],
+        where: { goalType: "normal", scorerId: { not: null }, match: { teamId } },
+        _count: { id: true },
+      }),
+      prisma.goal.groupBy({
+        by: ["assistId"],
+        where: { assistType: "member", assistId: { not: null }, match: { teamId } },
+        _count: { id: true },
+      }),
+    ]),
+    [`stats-${teamId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   // チーム成績
   const totalMatches = matches.length;

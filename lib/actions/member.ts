@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 const MEMBERSHIP_STATUSES = ["active", "inactive", "left"] as const;
@@ -19,6 +20,7 @@ export async function deleteMember(memberId: string, teamId: string) {
     prisma.teamMember.delete({ where: { id: memberId } }),
   ]);
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/members`);
 }
 
@@ -58,5 +60,6 @@ export async function updateMember(memberId: string, teamId: string, formData: F
     },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/members`);
 }

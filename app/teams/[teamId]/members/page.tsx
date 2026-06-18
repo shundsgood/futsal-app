@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ teamId: string }> };
@@ -18,10 +19,14 @@ const STATUS_COLOR: Record<string, string> = {
 export default async function MembersPage({ params }: Props) {
   const { teamId } = await params;
 
-  const members = await prisma.teamMember.findMany({
-    where: { teamId },
-    orderBy: [{ membershipStatus: "asc" }, { uniformNumber: "asc" }, { displayName: "asc" }],
-  });
+  const members = await unstable_cache(
+    async () => prisma.teamMember.findMany({
+      where: { teamId },
+      orderBy: [{ membershipStatus: "asc" }, { uniformNumber: "asc" }, { displayName: "asc" }],
+    }),
+    [`members-${teamId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   return (
     <div>

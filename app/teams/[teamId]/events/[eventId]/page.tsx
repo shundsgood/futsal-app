@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR, MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL, ATTENDANCE_LABEL, ATTENDANCE_COLOR } from "@/lib/constants";
 import { DeleteEventButton } from "./DeleteEventButton";
@@ -10,26 +11,31 @@ type Props = { params: Promise<{ teamId: string; eventId: string }> };
 export default async function EventDetailPage({ params }: Props) {
   const { teamId, eventId } = await params;
 
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: {
-      attendances: { include: { teamMember: true } },
-      matches: {
+  const [event, allMembers] = await unstable_cache(
+    async () => Promise.all([
+      prisma.event.findUnique({
+        where: { id: eventId },
         include: {
-          players: true,
-          goals: { include: { scorer: true }, orderBy: { goalOrder: "asc" } },
+          attendances: { include: { teamMember: true } },
+          matches: {
+            include: {
+              players: true,
+              goals: { include: { scorer: true }, orderBy: { goalOrder: "asc" } },
+            },
+            orderBy: { matchOrder: "asc" },
+          },
         },
-        orderBy: { matchOrder: "asc" },
-      },
-    },
-  });
+      }),
+      prisma.teamMember.findMany({
+        where: { teamId, membershipStatus: { not: "left" } },
+        orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
+      }),
+    ]),
+    [`event-detail-${eventId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   if (!event || event.teamId !== teamId) notFound();
-
-  const allMembers = await prisma.teamMember.findMany({
-    where: { teamId, membershipStatus: { not: "left" } },
-    orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
-  });
 
   const counts = { attending: 0, undecided: 0, absent: 0 };
   const attendanceMap = new Map(

@@ -10,12 +10,12 @@ export default async function AttendPage({ params }: Props) {
   const { teamId, eventId } = await params;
   const user = await getCurrentUser();
 
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
-  if (!event || event.teamId !== teamId) notFound();
+  const [event, member] = await Promise.all([
+    prisma.event.findUnique({ where: { id: eventId } }),
+    prisma.teamMember.findFirst({ where: { teamId, userId: user.id } }),
+  ]);
 
-  const member = await prisma.teamMember.findFirst({
-    where: { teamId, userId: user.id },
-  });
+  if (!event || event.teamId !== teamId) notFound();
 
   const existing = member
     ? await prisma.eventAttendance.findUnique({

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { reopenPoll } from "@/lib/actions/poll";
 import { SubmitButton } from "@/app/_components/SubmitButton";
@@ -26,26 +27,27 @@ const STATUS_COLOR: Record<string, string> = {
 export default async function PollDetailPage({ params }: Props) {
   const { teamId, pollId } = await params;
 
-  const poll = await prisma.schedulePoll.findUnique({
-    where: { id: pollId },
-    include: {
-      options: {
-        orderBy: { startDatetime: "asc" },
+  const [poll, allMembers] = await unstable_cache(
+    async () => Promise.all([
+      prisma.schedulePoll.findUnique({
+        where: { id: pollId },
         include: {
-          responses: {
-            include: { teamMember: true },
+          options: {
+            orderBy: { startDatetime: "asc" },
+            include: { responses: { include: { teamMember: true } } },
           },
         },
-      },
-    },
-  });
+      }),
+      prisma.teamMember.findMany({
+        where: { teamId, membershipStatus: { not: "left" } },
+        orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
+      }),
+    ]),
+    [`poll-detail-${pollId}`],
+    { tags: [`team-${teamId}`] },
+  )();
 
   if (!poll || poll.teamId !== teamId) notFound();
-
-  const allMembers = await prisma.teamMember.findMany({
-    where: { teamId, membershipStatus: { not: "left" } },
-    orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
-  });
 
   const activeMemberIds = new Set(allMembers.map((m) => m.id));
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { VALID_ATTENDANCE_STATUSES } from "@/lib/constants";
@@ -86,6 +87,7 @@ export async function confirmPollOptions(
   });
 
   if (alreadyConfirmed) return { error: "この日程調整はすでに確定済みです" };
+  revalidateTag(`team-${teamId}`, "max");
 }
 
 export async function confirmPoll(pollId: string, optionId: string, teamId: string) {
@@ -161,6 +163,7 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
     });
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events/${event.id}`);
 }
 
@@ -204,6 +207,7 @@ export async function createEvent(teamId: string, formData: FormData) {
     },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events/${event.id}`);
 }
 
@@ -238,6 +242,7 @@ export async function updateEvent(eventId: string, teamId: string, formData: For
     },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events/${eventId}`);
 }
 
@@ -247,6 +252,7 @@ export async function deleteEvent(eventId: string, teamId: string) {
 
   await prisma.event.delete({ where: { id: eventId } });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events`);
 }
 
@@ -255,6 +261,7 @@ export async function deleteEvents(eventIds: string[], teamId: string) {
   await prisma.event.deleteMany({
     where: { id: { in: eventIds }, teamId },
   });
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events`);
 }
 
@@ -288,5 +295,6 @@ export async function submitEventAttendance(
     create: { eventId, teamMemberId: member.id, status, comment },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}/events/${eventId}`);
 }
