@@ -41,89 +41,118 @@ export default async function MatchesPage({ params }: Props) {
           試合記録がまだありません
         </div>
       ) : (
-        <ul className="space-y-3">
-          {matches.map((match) => {
-            const scorers = match.goals
-              .map((g) =>
-                g.goalType === "normal"
-                  ? (g.scorer?.displayName ?? "—")
-                  : (GOAL_TYPE_LABEL[g.goalType] ?? g.goalType),
-              )
-              .join("、");
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="text-left px-3 py-2.5 font-medium text-gray-500 whitespace-nowrap">活動</th>
+                <th className="text-center px-2 py-2.5 font-medium text-gray-500 whitespace-nowrap">結果</th>
+                <th className="text-center px-2 py-2.5 font-medium text-gray-500 whitespace-nowrap">スコア</th>
+                <th className="text-left px-3 py-2.5 font-medium text-gray-500 whitespace-nowrap">対戦相手</th>
+                <th className="text-left px-3 py-2.5 font-medium text-gray-500 whitespace-nowrap">得点者</th>
+                <th className="px-2 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {matches.map((match) => {
+                const scorers = match.goals
+                  .map((g) =>
+                    g.goalType === "normal"
+                      ? (g.scorer?.displayName ?? "—")
+                      : (GOAL_TYPE_LABEL[g.goalType] ?? g.goalType),
+                  )
+                  .join("、");
 
-            const editHref = match.event
-              ? `/teams/${teamId}/events/${match.event.id}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`
-              : `/teams/${teamId}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`;
+                const editHref = match.event
+                  ? `/teams/${teamId}/events/${match.event.id}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`
+                  : `/teams/${teamId}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`;
 
-            return (
-              <li key={match.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3">
-                {/* 上段: 活動名 + 試合番号 + 勝敗 + 編集 */}
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0">
-                    {match.event ? (
-                      <Link
-                        href={`/teams/${teamId}/events/${match.event.id}`}
-                        className="text-xs font-medium text-blue-600 hover:underline block truncate"
+                return (
+                  <tr key={match.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                    {/* 活動名 + 日付 */}
+                    <td className="px-3 py-2.5 min-w-[100px]">
+                      {match.event ? (
+                        <Link
+                          href={`/teams/${teamId}/events/${match.event.id}`}
+                          className="block text-xs font-medium text-blue-600 hover:underline truncate max-w-[120px]"
+                        >
+                          {match.event.title}
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-gray-400">活動なし</span>
+                      )}
+                      <p className="text-xs text-gray-400 mt-0.5 whitespace-nowrap">
+                        {match.event
+                          ? new Date(match.event.startDatetime).toLocaleDateString("ja-JP", {
+                              month: "numeric",
+                              day: "numeric",
+                            }) + ` 第${match.matchOrder}試合`
+                          : `第${match.matchOrder}試合`}
+                      </p>
+                    </td>
+
+                    {/* 勝敗バッジ */}
+                    <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                      <span
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                          MATCH_RESULT_COLOR[match.result] ?? "bg-gray-100 text-gray-500"
+                        }`}
                       >
-                        {match.event.title}
+                        {MATCH_RESULT_LABEL[match.result] ?? match.result}
+                      </span>
+                    </td>
+
+                    {/* スコア */}
+                    <td className="px-2 py-2.5 text-center font-bold tabular-nums whitespace-nowrap text-gray-900">
+                      {match.ourScore} - {match.opponentScore}
+                    </td>
+
+                    {/* 対戦相手（URLがあればリンク化） */}
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      {match.matchUrl ? (
+                        <a
+                          href={match.matchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          {match.opponentName}
+                          <svg
+                            className="w-3 h-3 text-blue-400 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                            />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span className="text-gray-800">{match.opponentName}</span>
+                      )}
+                    </td>
+
+                    {/* 得点者 */}
+                    <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[120px]">
+                      <span className="block truncate">{scorers || "—"}</span>
+                    </td>
+
+                    {/* 編集 */}
+                    <td className="px-2 py-2.5 whitespace-nowrap">
+                      <Link href={editHref} className="text-xs text-gray-400 hover:text-blue-600">
+                        編集
                       </Link>
-                    ) : (
-                      <span className="text-xs text-gray-400">活動なし</span>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {match.event
-                        ? new Date(match.event.startDatetime).toLocaleDateString("ja-JP", {
-                            month: "numeric",
-                            day: "numeric",
-                            weekday: "short",
-                          }) + `　第${match.matchOrder}試合`
-                        : `第${match.matchOrder}試合`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                        MATCH_RESULT_COLOR[match.result] ?? "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {MATCH_RESULT_LABEL[match.result] ?? match.result}
-                    </span>
-                    <Link href={editHref} className="text-xs text-gray-400 hover:text-blue-600">
-                      編集
-                    </Link>
-                  </div>
-                </div>
-
-                {/* 中段: スコア + 対戦相手 */}
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900 tabular-nums">
-                    {match.ourScore} - {match.opponentScore}
-                  </span>
-                  <span className="text-sm text-gray-500">vs {match.opponentName}</span>
-                </div>
-
-                {/* 下段: 得点者 + URL */}
-                {(scorers || match.matchUrl) && (
-                  <div className="mt-1.5 space-y-0.5">
-                    {scorers && (
-                      <p className="text-xs text-gray-500 truncate">得点: {scorers}</p>
-                    )}
-                    {match.matchUrl && (
-                      <a
-                        href={match.matchUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:underline block truncate"
-                      >
-                        {match.matchUrl}
-                      </a>
-                    )}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
