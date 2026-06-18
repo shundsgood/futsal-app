@@ -164,6 +164,49 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
   redirect(`/teams/${teamId}/events/${event.id}`);
 }
 
+export async function createEvent(teamId: string, formData: FormData) {
+  const user = await getCurrentUser();
+
+  const title = (formData.get("title") as string | null)?.trim();
+  if (!title) throw new Error("タイトルは必須です");
+
+  const eventType = (formData.get("eventType") as string | null) || null;
+  const startDatetime = formData.get("startDatetime") as string | null;
+  if (!startDatetime) throw new Error("開始日時は必須です");
+
+  const endDatetime = (formData.get("endDatetime") as string | null) || null;
+  const venueName = (formData.get("venueName") as string | null)?.trim() || null;
+  const description = (formData.get("description") as string | null)?.trim() || null;
+  const note = (formData.get("note") as string | null)?.trim() || null;
+
+  const activeMembers = await prisma.teamMember.findMany({
+    where: { teamId, membershipStatus: { not: "left" } },
+  });
+
+  const event = await prisma.event.create({
+    data: {
+      teamId,
+      title,
+      eventType,
+      startDatetime: new Date(startDatetime),
+      endDatetime: endDatetime ? new Date(endDatetime) : null,
+      venueName,
+      description,
+      note,
+      status: "confirmed",
+      createdBy: user.id,
+      attendances: {
+        create: activeMembers.map((m) => ({
+          teamMemberId: m.id,
+          status: "undecided",
+        })),
+      },
+    },
+  });
+
+  redirect(`/teams/${teamId}/events/${event.id}`);
+}
+
 export async function updateEvent(eventId: string, teamId: string, formData: FormData) {
   const event = await prisma.event.findFirst({ where: { id: eventId, teamId } });
   if (!event) throw new Error("イベントが見つかりません");

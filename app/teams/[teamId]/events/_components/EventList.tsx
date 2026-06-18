@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+
 import { deleteEvents } from "@/lib/actions/event";
 import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR } from "@/lib/constants";
 
@@ -55,9 +56,19 @@ export function EventList({ teamId, events }: Props) {
 
   if (events.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
-        イベントがありません
-        <p className="text-xs mt-2 text-gray-400">日程調整で候補日を確定するとここに表示されます</p>
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Link
+            href={`/teams/${teamId}/events/new`}
+            className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition"
+          >
+            ＋ 活動を作成
+          </Link>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+          イベントがありません
+          <p className="text-xs mt-2 text-gray-400">日程調整で候補日を確定するか、直接活動を作成できます</p>
+        </div>
       </div>
     );
   }
@@ -66,32 +77,42 @@ export function EventList({ teamId, events }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-900">イベント一覧</h2>
-        {selecting ? (
-          <div className="flex items-center gap-2">
-            {selected.size > 0 && (
+        <div className="flex items-center gap-2">
+          {selecting ? (
+            <>
+              {selected.size > 0 && (
+                <button
+                  onClick={handleDelete}
+                  disabled={pending}
+                  className="text-sm font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  {pending ? "削除中..." : `削除 (${selected.size})`}
+                </button>
+              )}
               <button
-                onClick={handleDelete}
-                disabled={pending}
-                className="text-sm font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                onClick={handleCancel}
+                className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
               >
-                {pending ? "削除中..." : `削除 (${selected.size})`}
+                キャンセル
               </button>
-            )}
-            <button
-              onClick={handleCancel}
-              className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
-            >
-              キャンセル
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setSelecting(true)}
-            className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
-          >
-            選択
-          </button>
-        )}
+            </>
+          ) : (
+            <>
+              <Link
+                href={`/teams/${teamId}/events/new`}
+                className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition"
+              >
+                ＋ 活動を作成
+              </Link>
+              <button
+                onClick={() => setSelecting(true)}
+                className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
+              >
+                選択
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <ul className="space-y-3">
