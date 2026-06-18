@@ -22,8 +22,5 @@ export async function getCurrentUser() {
       email: user.email!,
       displayName,
     },
-  }).catch((e) => {
-    console.error("[getCurrentUser] prisma upsert error:", e);
-    throw e;
   });
 }
