@@ -16,15 +16,20 @@ export function LoginForm({ next }: Props) {
     e.preventDefault();
     setError(null);
     setPending(true);
-    const formData = new FormData(e.currentTarget);
-    const result = mode === "login"
-      ? await signIn(formData)
-      : await signUp(formData);
-    if (result?.error) {
-      setError(result.error);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const result = mode === "login"
+        ? await signIn(formData)
+        : await signUp(formData);
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        router.push(next);
+      }
+    } catch {
+      setError("エラーが発生しました。時間をおいてもう一度お試しください。");
+    } finally {
       setPending(false);
-    } else {
-      router.push(next);
     }
   };
 
