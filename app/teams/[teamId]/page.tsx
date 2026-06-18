@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ teamId: string }> };
@@ -6,14 +7,20 @@ type Props = { params: Promise<{ teamId: string }> };
 export default async function TeamDashboardPage({ params }: Props) {
   const { teamId } = await params;
 
-  const now = new Date();
-  const [memberCount, openPollCount, upcomingEventCount] = await Promise.all([
-    prisma.teamMember.count({ where: { teamId, membershipStatus: "active" } }),
-    prisma.schedulePoll.count({ where: { teamId, status: "open" } }),
-    prisma.event.count({
-      where: { teamId, status: "confirmed", startDatetime: { gte: now } },
-    }),
-  ]);
+  const [memberCount, openPollCount, upcomingEventCount] = await unstable_cache(
+    async () => {
+      const now = new Date();
+      return Promise.all([
+        prisma.teamMember.count({ where: { teamId, membershipStatus: "active" } }),
+        prisma.schedulePoll.count({ where: { teamId, status: "open" } }),
+        prisma.event.count({
+          where: { teamId, status: "confirmed", startDatetime: { gte: now } },
+        }),
+      ]);
+    },
+    [`dashboard-${teamId}`],
+    { tags: [`team-${teamId}`], revalidate: 3600 },
+  )();
 
   const cards = [
     {
