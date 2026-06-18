@@ -6,14 +6,14 @@ import Link from "next/link";
 import { deleteEvents } from "@/lib/actions/event";
 import { EVENT_TYPE_LABEL, EVENT_TYPE_COLOR } from "@/lib/constants";
 
-function getStatusLabel(status: string, startDatetime: Date): string {
+function getStatusLabel(status: string, startDatetime: Date | string): string {
   if (status === "cancelled") return "中止";
-  return new Date() < startDatetime ? "開催前" : "完了";
+  return new Date() < new Date(startDatetime) ? "開催前" : "完了";
 }
 
-function getStatusColor(status: string, startDatetime: Date): string {
+function getStatusColor(status: string, startDatetime: Date | string): string {
   if (status === "cancelled") return "bg-red-100 text-red-600";
-  return new Date() < startDatetime ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500";
+  return new Date() < new Date(startDatetime) ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500";
 }
 
 type Event = {
@@ -21,7 +21,7 @@ type Event = {
   title: string;
   eventType: string | null;
   status: string;
-  startDatetime: Date;
+  startDatetime: Date | string;
   venueName: string | null;
   finalRank: string | null;
   attendances: { id: string }[];
