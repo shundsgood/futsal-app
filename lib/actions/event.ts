@@ -5,6 +5,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { VALID_ATTENDANCE_STATUSES } from "@/lib/constants";
+import { parseDatetimeLocalJST } from "@/lib/utils";
 
 const RESPONSE_TO_ATTENDANCE: Record<string, string> = {
   available: "attending",
@@ -191,8 +192,8 @@ export async function createEvent(teamId: string, formData: FormData) {
       teamId,
       title,
       eventType,
-      startDatetime: new Date(startDatetime),
-      endDatetime: endDatetime ? new Date(endDatetime) : null,
+      startDatetime: parseDatetimeLocalJST(startDatetime),
+      endDatetime: endDatetime ? parseDatetimeLocalJST(endDatetime) : null,
       venueName,
       description,
       note,
@@ -233,8 +234,8 @@ export async function updateEvent(eventId: string, teamId: string, formData: For
     data: {
       title,
       eventType,
-      startDatetime: new Date(startDatetime),
-      endDatetime: endDatetime ? new Date(endDatetime) : null,
+      startDatetime: parseDatetimeLocalJST(startDatetime),
+      endDatetime: endDatetime ? parseDatetimeLocalJST(endDatetime) : null,
       venueName,
       description,
       note,

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { parseDatetimeLocalJST, parseDateLocalJST } from "@/lib/utils";
 
 export async function createPoll(teamId: string, formData: FormData) {
   const user = await getCurrentUser();
@@ -33,8 +34,8 @@ export async function createPoll(teamId: string, formData: FormData) {
     const note = (formData.get(`note_${i}`) as string | null)?.trim() || null;
 
     if (start) {
-      const startDate = hasTime ? new Date(start) : new Date(start + "T00:00:00");
-      const endDate = hasTime && end ? new Date(end) : null;
+      const startDate = hasTime ? parseDatetimeLocalJST(start) : parseDateLocalJST(start);
+      const endDate = hasTime && end ? parseDatetimeLocalJST(end) : null;
       if (hasTime && endDate && endDate <= startDate) {
         throw new Error(`候補日${i + 1}: 終了日時は開始日時より後にしてください`);
       }
@@ -57,7 +58,7 @@ export async function createPoll(teamId: string, formData: FormData) {
       title,
       description,
       eventType,
-      responseDeadline: responseDeadline ? new Date(responseDeadline) : null,
+      responseDeadline: responseDeadline ? parseDatetimeLocalJST(responseDeadline) : null,
       status: "open",
       createdBy: user.id,
       options: {
@@ -153,8 +154,8 @@ export async function updatePollOptions(
     const existingId = (formData.get(`existingOptionId_${i}`) as string | null) || null;
 
     if (start) {
-      const startDate = hasTime ? new Date(start) : new Date(start + "T00:00:00");
-      const endDate = hasTime && end ? new Date(end) : null;
+      const startDate = hasTime ? parseDatetimeLocalJST(start) : parseDateLocalJST(start);
+      const endDate = hasTime && end ? parseDatetimeLocalJST(end) : null;
       if (hasTime && endDate && endDate <= startDate) {
         return { error: `候補日${i + 1}: 終了日時は開始日時より後にしてください` };
       }
@@ -218,7 +219,7 @@ export async function updatePollInfo(
       title,
       description,
       eventType,
-      responseDeadline: responseDeadline ? new Date(responseDeadline) : null,
+      responseDeadline: responseDeadline ? parseDatetimeLocalJST(responseDeadline) : null,
     },
   });
 
