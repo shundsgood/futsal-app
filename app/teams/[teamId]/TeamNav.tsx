@@ -16,6 +16,7 @@ export function TeamNav({ teamId }: Props) {
     { href: `/teams/${teamId}/polls`, label: "日程" },
     { href: `/teams/${teamId}/events`, label: "活動" },
     { href: `/teams/${teamId}/stats`, label: "成績" },
+    { href: `/teams/${teamId}/settings`, label: "設定" },
   ];
 
   return (

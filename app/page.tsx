@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { signOut } from "@/lib/actions/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -20,14 +21,24 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">チーム一覧</h1>
-            <p className="text-sm text-gray-500 mt-1">{user.displayName} でログイン中</p>
+            <p className="text-sm text-gray-500 mt-1">{user.displayName}</p>
           </div>
-          <Link
-            href="/teams/new"
-            className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            + チーム作成
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/teams/new"
+              className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              + チーム作成
+            </Link>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="text-sm text-gray-500 hover:text-gray-700 px-2 py-2"
+              >
+                ログアウト
+              </button>
+            </form>
+          </div>
         </div>
 
         {teams.length === 0 ? (

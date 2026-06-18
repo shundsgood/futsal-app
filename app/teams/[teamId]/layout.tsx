@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { TeamNav } from "./TeamNav";
+import { JoinPrompt } from "./_components/JoinPrompt";
 
 type Props = {
   children: React.ReactNode;
@@ -11,12 +13,23 @@ type Props = {
 export default async function TeamLayout({ children, params }: Props) {
   const { teamId } = await params;
 
-  const team = await prisma.team.findUnique({ where: { id: teamId } });
+  const [user, team] = await Promise.all([
+    getCurrentUser(),
+    prisma.team.findUnique({ where: { id: teamId } }),
+  ]);
+
   if (!team) notFound();
+
+  const member = await prisma.teamMember.findFirst({
+    where: { teamId, userId: user.id },
+  });
+
+  if (!member) {
+    return <JoinPrompt teamId={teamId} teamName={team.name} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">

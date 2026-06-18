@@ -27,12 +27,6 @@ export default async function MembersPage({ params }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-900">メンバー一覧</h2>
-        <Link
-          href={`/teams/${teamId}/members/new`}
-          className="bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700"
-        >
-          + 追加
-        </Link>
       </div>
 
       {members.length === 0 ? (
