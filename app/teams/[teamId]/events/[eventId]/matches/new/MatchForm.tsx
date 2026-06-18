@@ -38,7 +38,7 @@ export function MatchForm({ formAction, defaultMatchOrder, members, returnTo }: 
   const result = calcResult(ourScore, oppScore);
 
   const handleOurScoreChange = (value: string) => {
-    const score = Math.max(0, parseInt(value) || 0);
+    const score = Math.max(0, parseInt(value.replace(/\D/g, "")) || 0);
     setOurScore(score);
     setGoals((prev) => {
       if (score <= prev.length) return prev.slice(0, score);
@@ -112,9 +112,9 @@ export function MatchForm({ formAction, defaultMatchOrder, members, returnTo }: 
             <label className="block text-xs text-gray-500 mb-1 text-center">自チーム</label>
             <input
               name="ourScore"
-              type="number"
-              min={0}
-              max={99}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={ourScore}
               onChange={(e) => handleOurScoreChange(e.target.value)}
               onFocus={(e) => e.target.select()}
@@ -126,11 +126,11 @@ export function MatchForm({ formAction, defaultMatchOrder, members, returnTo }: 
             <label className="block text-xs text-gray-500 mb-1 text-center">相手</label>
             <input
               name="opponentScore"
-              type="number"
-              min={0}
-              max={99}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={oppScore}
-              onChange={(e) => setOppScore(Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={(e) => setOppScore(Math.max(0, parseInt(e.target.value.replace(/\D/g, "")) || 0))}
               onFocus={(e) => e.target.select()}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

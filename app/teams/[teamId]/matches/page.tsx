@@ -10,7 +10,7 @@ export default async function MatchesPage({ params }: Props) {
   const matches = await prisma.match.findMany({
     where: { teamId },
     include: {
-      event: { select: { id: true, title: true, startDatetime: true } },
+      event: { select: { id: true, title: true, startDatetime: true, venueName: true } },
       goals: {
         include: { scorer: { select: { displayName: true } } },
         orderBy: { goalOrder: "asc" },
@@ -74,6 +74,7 @@ export default async function MatchesPage({ params }: Props) {
                             className="block text-xs font-medium text-blue-600 hover:underline truncate max-w-[120px]"
                           >
                             {match.event.title}
+                            {match.event.venueName && `（${match.event.venueName}）`}
                           </Link>
                         ) : (
                           <span className="text-xs text-gray-400">活動なし</span>
