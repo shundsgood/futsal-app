@@ -130,6 +130,14 @@ export async function deleteEvent(eventId: string, teamId: string) {
   redirect(`/teams/${teamId}/events`);
 }
 
+export async function deleteEvents(eventIds: string[], teamId: string) {
+  if (eventIds.length === 0) return;
+  await prisma.event.deleteMany({
+    where: { id: { in: eventIds }, teamId },
+  });
+  redirect(`/teams/${teamId}/events`);
+}
+
 export async function submitEventAttendance(
   eventId: string,
   teamId: string,
