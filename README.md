@@ -1,78 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# フットサル管理アプリ
 
-## ⚠️ 認証について
+チームの日程調整・メンバー管理・試合記録を行うフットサル向け Web アプリです。
 
-現在の実装は**ダミー認証**（固定ユーザー `dummy-user-01`）を使用しています。
-**本番環境では使用しないでください。** 誰がアクセスしても同じユーザーとして扱われ、全チームのデータに無制限アクセスできる状態です。
-本番デプロイ前に NextAuth.js・Clerk 等の実認証を実装してください。
+## 技術スタック
+
+| 項目 | 内容 |
+|------|------|
+| フレームワーク | Next.js 16 (App Router) |
+| 言語 | TypeScript |
+| DB | Supabase (PostgreSQL) |
+| ORM | Prisma 7 |
+| 認証 | Supabase Auth（メール＋パスワード） |
+| デプロイ | Vercel |
 
 ---
 
 ## セットアップ
 
-### 環境変数
+### 1. 環境変数
 
-`.env.example` をコピーして `.env` を作成し、Supabase の接続文字列を設定してください。
+`.env.example` をコピーして `.env` を作成します。
 
 ```bash
 cp .env.example .env
 ```
 
-Supabase の接続文字列は **プロジェクト設定 → Database → Connection string** から取得できます。
-
 | 変数 | 用途 | 取得元 |
 |------|------|--------|
-| `DATABASE_URL` | アプリ runtime 用（Transaction Pooler・port 6543） | Connection string → Transaction pooler |
-| `DIRECT_URL` | `prisma migrate` 専用（Direct・port 5432） | Connection string → Direct connection |
+| `DATABASE_URL` | アプリ runtime（Transaction Pooler・port 6543） | Supabase → Project Settings → Database → Transaction pooler |
+| `DIRECT_URL` | `prisma migrate` 専用（Session Pooler・port 5432） | Supabase → Project Settings → Database → Session pooler |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクト URL | Supabase → Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase anon key | Supabase → Project Settings → API → Publishable key |
 
-### DB マイグレーション
-
-| コマンド | 用途 |
-|---------|------|
-| `npx prisma migrate dev` | ローカル開発時・スキーマ変更時（`DIRECT_URL` が必要） |
-| `npx prisma migrate deploy` | 本番 DB への適用（CI/CD や Vercel の build hook で実行） |
-
-> **注意:** `migrate dev` は shadow DB を作成するため本番環境では実行しないでください。
-
-### 初期データ（seed）
+### 2. DB マイグレーション
 
 ```bash
-npx prisma db seed
+npx prisma migrate dev    # 開発時・スキーマ変更時
+npx prisma migrate deploy # 本番 DB への適用
 ```
 
----
+> `migrate dev` は shadow DB を作成するため本番環境では実行しないでください。
 
-## Getting Started
-
-First, run the development server:
+### 3. 開発サーバー起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) を開いてください。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Supabase 設定
 
-## Learn More
+### Authentication
 
-To learn more about Next.js, take a look at the following resources:
+- **Providers → Email → Confirm email**: 開発中は OFF 推奨（メール送信なしで即ログイン可能）
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## デプロイ（Vercel）
 
-## Deploy on Vercel
+1. GitHub リポジトリを Vercel に接続
+2. Environment Variables に上記4つの環境変数を設定（Production / Preview / Development すべてにチェック）
+3. `main` ブランチへの push で自動デプロイ
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+本番 DB へのマイグレーションは Vercel の build コマンドに含めるか、手動で `npx prisma migrate deploy` を実行してください。
