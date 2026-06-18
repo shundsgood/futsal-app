@@ -7,6 +7,7 @@ import { SubmitButton } from "@/app/_components/SubmitButton";
 type OptionEntry = {
   localId: number;
   existingId: string;
+  hasTime: boolean;
   startDatetime: string;
   endDatetime: string;
   venueName: string;
@@ -31,6 +32,7 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
       {
         localId: nextId.current++,
         existingId: "",
+        hasTime: false,
         startDatetime: "",
         endDatetime: "",
         venueName: "",
@@ -41,6 +43,25 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
   const removeOption = (localId: number) =>
     setOptions((prev) => prev.filter((o) => o.localId !== localId));
 
+  const toggleHasTime = (localId: number) => {
+    setOptions((prev) =>
+      prev.map((o) => {
+        if (o.localId !== localId) return o;
+        const turningOn = !o.hasTime;
+        return {
+          ...o,
+          hasTime: turningOn,
+          startDatetime: o.startDatetime
+            ? turningOn
+              ? o.startDatetime + "T00:00"
+              : o.startDatetime.slice(0, 10)
+            : "",
+          endDatetime: "",
+        };
+      })
+    );
+  };
+
   const boundAction = updatePollOptions.bind(null, pollId, teamId);
   const [state, formAction] = useActionState(boundAction, undefined);
 
@@ -49,7 +70,7 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700">
-            候補日時 <span className="text-red-500">*</span>
+            候補日 <span className="text-red-500">*</span>
           </p>
           <button
             type="button"
@@ -75,6 +96,7 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
                   value={opt.existingId}
                 />
               )}
+              <input type="hidden" name={`hasTime_${idx}`} value={String(opt.hasTime)} />
 
               {options.length > 1 && (
                 <button
@@ -87,29 +109,54 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
                 </button>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 mb-3 cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={opt.hasTime}
+                  onChange={() => toggleHasTime(opt.localId)}
+                  className="h-4 w-4 accent-blue-500"
+                />
+                <span className="text-xs text-gray-600">時間を指定する</span>
+              </label>
+
+              {opt.hasTime ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      開始日時 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name={`startDatetime_${idx}`}
+                      type="datetime-local"
+                      required
+                      defaultValue={opt.startDatetime}
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">終了日時</label>
+                    <input
+                      name={`endDatetime_${idx}`}
+                      type="datetime-local"
+                      defaultValue={opt.endDatetime}
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              ) : (
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">
-                    開始日時 <span className="text-red-500">*</span>
+                    日付 <span className="text-red-500">*</span>
                   </label>
                   <input
                     name={`startDatetime_${idx}`}
-                    type="datetime-local"
+                    type="date"
                     required
                     defaultValue={opt.startDatetime}
                     className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">終了日時</label>
-                  <input
-                    name={`endDatetime_${idx}`}
-                    type="datetime-local"
-                    defaultValue={opt.endDatetime}
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="mt-3">
                 <label className="block text-xs text-gray-600 mb-1">会場</label>

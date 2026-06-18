@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createPoll } from "@/lib/actions/poll";
 import { SubmitButton } from "@/app/_components/SubmitButton";
 
-type Option = { id: number };
+type Option = { id: number; hasTime: boolean };
 
 const EVENT_TYPES = [
   { value: "", label: "種別を選択" },
@@ -16,14 +16,19 @@ const EVENT_TYPES = [
 ];
 
 export function PollForm({ teamId }: { teamId: string }) {
-  const [options, setOptions] = useState<Option[]>([{ id: 0 }]);
+  const [options, setOptions] = useState<Option[]>([{ id: 0, hasTime: false }]);
   const nextId = useRef(1);
 
   const addOption = () =>
-    setOptions((prev) => [...prev, { id: nextId.current++ }]);
+    setOptions((prev) => [...prev, { id: nextId.current++, hasTime: false }]);
 
   const removeOption = (id: number) =>
     setOptions((prev) => prev.filter((o) => o.id !== id));
+
+  const toggleHasTime = (id: number) =>
+    setOptions((prev) =>
+      prev.map((o) => (o.id !== id ? o : { ...o, hasTime: !o.hasTime }))
+    );
 
   const action = createPoll.bind(null, teamId);
 
@@ -92,7 +97,7 @@ export function PollForm({ teamId }: { teamId: string }) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700">
-            候補日時 <span className="text-red-500">*</span>
+            候補日 <span className="text-red-500">*</span>
           </p>
           <button
             type="button"
@@ -122,27 +127,53 @@ export function PollForm({ teamId }: { teamId: string }) {
                 </button>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input type="hidden" name={`hasTime_${idx}`} value={String(opt.hasTime)} />
+
+              <label className="flex items-center gap-2 mb-3 cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={opt.hasTime}
+                  onChange={() => toggleHasTime(opt.id)}
+                  className="h-4 w-4 accent-blue-500"
+                />
+                <span className="text-xs text-gray-600">時間を指定する</span>
+              </label>
+
+              {opt.hasTime ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      開始日時 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name={`startDatetime_${idx}`}
+                      type="datetime-local"
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">終了日時</label>
+                    <input
+                      name={`endDatetime_${idx}`}
+                      type="datetime-local"
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              ) : (
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">
-                    開始日時 <span className="text-red-500">*</span>
+                    日付 <span className="text-red-500">*</span>
                   </label>
                   <input
                     name={`startDatetime_${idx}`}
-                    type="datetime-local"
+                    type="date"
                     required
                     className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">終了日時</label>
-                  <input
-                    name={`endDatetime_${idx}`}
-                    type="datetime-local"
-                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="mt-3">
                 <label className="block text-xs text-gray-600 mb-1">会場</label>

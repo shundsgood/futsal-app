@@ -128,13 +128,13 @@ export default async function PollDetailPage({ params }: Props) {
               <div key={opt.id} className="bg-white rounded-xl border border-gray-200 p-4">
                 <p className="text-xs font-semibold text-gray-500 mb-1">候補 {idx + 1}</p>
                 <p className="font-medium text-gray-900">
-                  {new Date(opt.startDatetime).toLocaleString("ja-JP", {
-                    month: "numeric",
-                    day: "numeric",
-                    weekday: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {(() => {
+                    const d = new Date(opt.startDatetime);
+                    const isDateOnly = d.getHours() === 0 && d.getMinutes() === 0 && !opt.endDatetime;
+                    return isDateOnly
+                      ? d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" })
+                      : d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit" });
+                  })()}
                   {opt.endDatetime && (
                     <span className="text-gray-500">
                       {" "}〜{" "}
