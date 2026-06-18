@@ -163,6 +163,7 @@ model Match {
   // win | draw | loss
   result        String
   memo          String?
+  matchUrl      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

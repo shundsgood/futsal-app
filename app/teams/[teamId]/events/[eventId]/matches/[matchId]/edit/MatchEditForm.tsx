@@ -31,9 +31,11 @@ type Props = {
     ourScore: number;
     opponentScore: number;
     memo: string;
+    matchUrl: string;
   };
   members: Member[];
   initialGoals: InitialGoal[];
+  returnTo?: string;
 };
 
 function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
@@ -49,6 +51,7 @@ export function MatchEditForm({
   defaultValues,
   members,
   initialGoals,
+  returnTo,
 }: Props) {
   const nextLocalId = useRef(initialGoals.length);
 
@@ -106,6 +109,7 @@ export function MatchEditForm({
   return (
     <div className="space-y-6">
       <form action={updateAction} className="space-y-5">
+        {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
         {/* 試合順 */}
         <div>
           <label htmlFor="matchOrder" className="block text-sm font-medium text-gray-700 mb-1">
@@ -181,6 +185,21 @@ export function MatchEditForm({
           <input key={id} type="hidden" name="playerIds" value={id} />
         ))}
         <MemberCheckList members={members} selectedIds={selectedIds} toggleMember={toggleMember} />
+
+        {/* 試合のURL */}
+        <div>
+          <label htmlFor="matchUrl" className="block text-sm font-medium text-gray-700 mb-1">
+            試合のURL
+          </label>
+          <input
+            id="matchUrl"
+            name="matchUrl"
+            type="url"
+            defaultValue={defaultValues.matchUrl}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://..."
+          />
+        </div>
 
         {/* メモ */}
         <div>

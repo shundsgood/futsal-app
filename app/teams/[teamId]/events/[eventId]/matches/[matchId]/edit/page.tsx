@@ -3,10 +3,14 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { MatchEditForm } from "./MatchEditForm";
 
-type Props = { params: Promise<{ teamId: string; eventId: string; matchId: string }> };
+type Props = {
+  params: Promise<{ teamId: string; eventId: string; matchId: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
+};
 
-export default async function EditMatchPage({ params }: Props) {
+export default async function EditMatchPage({ params, searchParams }: Props) {
   const { teamId, eventId, matchId } = await params;
+  const { returnTo } = await searchParams;
 
   const [match, attendances, allMembers] = await Promise.all([
     prisma.match.findUnique({
@@ -66,9 +70,11 @@ export default async function EditMatchPage({ params }: Props) {
             ourScore: match.ourScore,
             opponentScore: match.opponentScore,
             memo: match.memo ?? "",
+            matchUrl: match.matchUrl ?? "",
           }}
           members={members}
           initialGoals={initialGoals}
+          returnTo={returnTo}
         />
       </div>
     </div>

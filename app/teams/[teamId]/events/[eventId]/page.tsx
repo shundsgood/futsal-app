@@ -207,6 +207,16 @@ export default async function EventDetailPage({ params }: Props) {
                     </span>
                   )}
                 </div>
+                {match.matchUrl && (
+                  <a
+                    href={match.matchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block text-xs text-blue-500 hover:underline truncate"
+                  >
+                    {match.matchUrl}
+                  </a>
+                )}
               </div>
             ))}
           </div>

@@ -19,6 +19,7 @@ type Props = {
   teamId: string;
   defaultMatchOrder: number;
   members: Member[];
+  returnTo?: string;
 };
 
 function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
@@ -27,7 +28,7 @@ function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
   return "loss";
 }
 
-export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props) {
+export function MatchForm({ eventId, teamId, defaultMatchOrder, members, returnTo }: Props) {
   const nextLocalId = useRef(0);
   const [ourScore, setOurScore] = useState(0);
   const [oppScore, setOppScore] = useState(0);
@@ -74,6 +75,7 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
 
   return (
     <form action={action} className="space-y-5">
+      {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
       {/* 試合順 */}
       <div>
         <label htmlFor="matchOrder" className="block text-sm font-medium text-gray-700 mb-1">
@@ -149,6 +151,20 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members }: Props
         <input key={id} type="hidden" name="playerIds" value={id} />
       ))}
       <MemberCheckList members={members} selectedIds={selectedIds} toggleMember={toggleMember} />
+
+      {/* 試合のURL */}
+      <div>
+        <label htmlFor="matchUrl" className="block text-sm font-medium text-gray-700 mb-1">
+          試合のURL
+        </label>
+        <input
+          id="matchUrl"
+          name="matchUrl"
+          type="url"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="https://..."
+        />
+      </div>
 
       {/* メモ */}
       <div>

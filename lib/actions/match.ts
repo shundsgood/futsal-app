@@ -24,6 +24,7 @@ export async function createMatch(eventId: string, teamId: string, formData: For
   const ourScoreRaw = formData.get("ourScore") as string | null;
   const opponentScoreRaw = formData.get("opponentScore") as string | null;
   const memo = (formData.get("memo") as string | null)?.trim() || null;
+  const matchUrl = (formData.get("matchUrl") as string | null)?.trim() || null;
   const playerIds = formData.getAll("playerIds") as string[];
 
   if (!opponentName) throw new Error("対戦相手名は必須です");
@@ -75,6 +76,7 @@ export async function createMatch(eventId: string, teamId: string, formData: For
         opponentScore,
         result,
         memo,
+        matchUrl,
         players: {
           create: playerIds.map((teamMemberId) => ({ teamMemberId })),
         },
@@ -87,7 +89,8 @@ export async function createMatch(eventId: string, teamId: string, formData: For
     }
   });
 
-  redirect(`/teams/${teamId}/events/${eventId}`);
+  const returnTo = (formData.get("returnTo") as string | null) || `/teams/${teamId}/events/${eventId}`;
+  redirect(returnTo);
 }
 
 export async function updateMatch(
@@ -106,6 +109,7 @@ export async function updateMatch(
   const ourScoreRaw = formData.get("ourScore") as string | null;
   const opponentScoreRaw = formData.get("opponentScore") as string | null;
   const memo = (formData.get("memo") as string | null)?.trim() || null;
+  const matchUrl = (formData.get("matchUrl") as string | null)?.trim() || null;
   const playerIds = formData.getAll("playerIds") as string[];
 
   if (!opponentName) throw new Error("対戦相手名は必須です");
@@ -153,7 +157,7 @@ export async function updateMatch(
     await tx.goal.deleteMany({ where: { matchId } });
     await tx.match.update({
       where: { id: matchId },
-      data: { matchOrder, opponentName, ourScore, opponentScore, result, memo },
+      data: { matchOrder, opponentName, ourScore, opponentScore, result, memo, matchUrl },
     });
     if (playerIds.length > 0) {
       await tx.matchPlayer.createMany({
@@ -167,7 +171,8 @@ export async function updateMatch(
     }
   });
 
-  redirect(`/teams/${teamId}/events/${eventId}`);
+  const returnTo = (formData.get("returnTo") as string | null) || `/teams/${teamId}/events/${eventId}`;
+  redirect(returnTo);
 }
 
 export async function deleteMatch(matchId: string, eventId: string, teamId: string) {
