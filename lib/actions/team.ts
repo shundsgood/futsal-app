@@ -54,11 +54,15 @@ export async function deleteTeam(teamId: string) {
   redirect("/");
 }
 
-export async function joinTeam(teamId: string) {
+export async function joinTeam(
+  teamId: string,
+  _prevState: unknown,
+  _formData: FormData,
+): Promise<{ error: string } | undefined> {
   const user = await getCurrentUser();
 
   const team = await prisma.team.findUnique({ where: { id: teamId } });
-  if (!team) throw new Error("チームが見つかりません");
+  if (!team) return { error: "チームが見つかりません" };
 
   const existing = await prisma.teamMember.findFirst({ where: { teamId, userId: user.id } });
   if (existing) redirect(`/teams/${teamId}`);
