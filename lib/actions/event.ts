@@ -53,6 +53,11 @@ export async function confirmPoll(pollId: string, optionId: string, teamId: stri
       throw new Error("この日程調整はすでに確定済みです");
     }
 
+    const existing = await tx.event.findFirst({
+      where: { sourcePollId: pollId, startDatetime: option.startDatetime },
+    });
+    if (existing) return existing;
+
     return tx.event.create({
       data: {
         teamId,

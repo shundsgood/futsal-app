@@ -193,11 +193,11 @@ export async function reopenPoll(pollId: string, teamId: string) {
   if (!poll) throw new Error("日程調整が見つかりません");
   if (poll.status !== "confirmed") throw new Error("確定済みの日程調整のみ戻せます");
 
+  const now = new Date();
   await prisma.$transaction(async (tx) => {
     await tx.schedulePoll.update({ where: { id: pollId }, data: { status: "open" } });
-    await tx.event.updateMany({
-      where: { sourcePollId: pollId, status: "confirmed" },
-      data: { status: "cancelled" },
+    await tx.event.deleteMany({
+      where: { sourcePollId: pollId, status: "confirmed", startDatetime: { gt: now } },
     });
   });
 
