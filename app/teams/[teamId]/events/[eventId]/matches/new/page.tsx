@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { createMatch } from "@/lib/actions/match";
 import { MatchForm } from "./MatchForm";
 
 type Props = { params: Promise<{ teamId: string; eventId: string }> };
@@ -42,8 +43,7 @@ export default async function NewMatchPage({ params }: Props) {
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <MatchForm
-          eventId={eventId}
-          teamId={teamId}
+          formAction={createMatch.bind(null, eventId, teamId)}
           defaultMatchOrder={matchCount + 1}
           members={members}
         />

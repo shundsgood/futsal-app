@@ -33,6 +33,7 @@ model Team {
   members TeamMember[]
   polls   SchedulePoll[]
   events  Event[]
+  matches Match[]
 }
 
 model TeamMember {
@@ -155,7 +156,8 @@ model EventAttendance {
 
 model Match {
   id            String   @id @default(cuid())
-  eventId       String
+  teamId        String
+  eventId       String?
   matchOrder    Int
   opponentName  String
   ourScore      Int
@@ -167,7 +169,8 @@ model Match {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  event   Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  team    Team          @relation(fields: [teamId], references: [id])
+  event   Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   players MatchPlayer[]
   goals   Goal[]
 }

@@ -8,7 +8,7 @@ export default async function MatchesPage({ params }: Props) {
   const { teamId } = await params;
 
   const matches = await prisma.match.findMany({
-    where: { event: { teamId } },
+    where: { teamId },
     include: {
       event: { select: { id: true, title: true, startDatetime: true } },
       goals: {
@@ -76,24 +76,31 @@ export default async function MatchesPage({ params }: Props) {
                   )
                   .join(", ");
 
-                const editHref = `/teams/${teamId}/events/${match.event.id}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`;
+                const editHref = match.event
+                  ? `/teams/${teamId}/events/${match.event.id}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`
+                  : `/teams/${teamId}/matches/${match.id}/edit?returnTo=${encodeURIComponent(returnTo)}`;
 
                 return (
                   <tr key={match.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
                     <td className="px-3 py-3 whitespace-nowrap">
-                      <Link
-                        href={`/teams/${teamId}/events/${match.event.id}`}
-                        className="text-blue-600 hover:underline font-medium"
-                      >
-                        {match.event.title}
-                      </Link>
+                      {match.event ? (
+                        <Link
+                          href={`/teams/${teamId}/events/${match.event.id}`}
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          {match.event.title}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400 font-medium">活動なし</span>
+                      )}
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {new Date(match.event.startDatetime).toLocaleDateString("ja-JP", {
-                          month: "numeric",
-                          day: "numeric",
-                          weekday: "short",
-                        })}
-                        {" "}第{match.matchOrder}試合
+                        {match.event
+                          ? new Date(match.event.startDatetime).toLocaleDateString("ja-JP", {
+                              month: "numeric",
+                              day: "numeric",
+                              weekday: "short",
+                            }) + ` 第${match.matchOrder}試合`
+                          : `第${match.matchOrder}試合`}
                       </p>
                     </td>
                     <td className="px-3 py-3 text-center">

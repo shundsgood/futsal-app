@@ -88,12 +88,12 @@ export default async function StatsPage({ params }: Props) {
       orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
     }),
     prisma.match.findMany({
-      where: { event: { teamId } },
+      where: { teamId },
       select: { result: true, ourScore: true, opponentScore: true },
     }),
     prisma.matchPlayer.groupBy({
       by: ["teamMemberId"],
-      where: { match: { event: { teamId } } },
+      where: { match: { teamId } },
       _count: { id: true },
     }),
     prisma.goal.groupBy({
@@ -101,7 +101,7 @@ export default async function StatsPage({ params }: Props) {
       where: {
         goalType: "normal",
         scorerId: { not: null },
-        match: { event: { teamId } },
+        match: { teamId },
       },
       _count: { id: true },
     }),
@@ -110,7 +110,7 @@ export default async function StatsPage({ params }: Props) {
       where: {
         assistType: "member",
         assistId: { not: null },
-        match: { event: { teamId } },
+        match: { teamId },
       },
       _count: { id: true },
     }),

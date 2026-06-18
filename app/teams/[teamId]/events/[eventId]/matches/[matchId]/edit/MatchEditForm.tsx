@@ -23,7 +23,7 @@ type InitialGoal = {
 
 type Props = {
   matchId: string;
-  eventId: string;
+  eventId: string | null;
   teamId: string;
   defaultValues: {
     matchOrder: number;

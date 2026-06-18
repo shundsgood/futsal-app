@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createMatch } from "@/lib/actions/match";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR } from "@/lib/constants";
 import { SubmitButton } from "@/app/_components/SubmitButton";
 import { GoalRows, GoalRow, GoalType } from "../_components/GoalRows";
@@ -15,8 +14,7 @@ type Member = {
 };
 
 type Props = {
-  eventId: string;
-  teamId: string;
+  formAction: (formData: FormData) => Promise<void>;
   defaultMatchOrder: number;
   members: Member[];
   returnTo?: string;
@@ -28,7 +26,7 @@ function calcResult(our: number, opp: number): "win" | "draw" | "loss" {
   return "loss";
 }
 
-export function MatchForm({ eventId, teamId, defaultMatchOrder, members, returnTo }: Props) {
+export function MatchForm({ formAction, defaultMatchOrder, members, returnTo }: Props) {
   const nextLocalId = useRef(0);
   const [ourScore, setOurScore] = useState(0);
   const [oppScore, setOppScore] = useState(0);
@@ -38,7 +36,6 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members, returnT
   const [goals, setGoals] = useState<GoalRow[]>([]);
 
   const result = calcResult(ourScore, oppScore);
-  const action = createMatch.bind(null, eventId, teamId);
 
   const handleOurScoreChange = (value: string) => {
     const score = Math.max(0, parseInt(value) || 0);
@@ -74,7 +71,7 @@ export function MatchForm({ eventId, teamId, defaultMatchOrder, members, returnT
   const others = members.filter((m) => !selectedIds.has(m.id));
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
       {/* 試合順 */}
       <div>

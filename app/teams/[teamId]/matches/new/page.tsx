@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { createMatch, createStandaloneMatch } from "@/lib/actions/match";
 import { MatchForm } from "../../events/[eventId]/matches/new/MatchForm";
 import { EVENT_TYPE_LABEL } from "@/lib/constants";
 
@@ -13,7 +14,43 @@ export default async function NewMatchFromListPage({ params, searchParams }: Pro
   const { teamId } = await params;
   const { eventId } = await searchParams;
 
-  // Step 2: event selected — show full match form
+  // Step 2a: standalone (no event)
+  if (eventId === "none") {
+    const allMembers = await prisma.teamMember.findMany({
+      where: { teamId, membershipStatus: { not: "left" } },
+      orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
+    });
+    const members = allMembers.map((m) => ({
+      id: m.id,
+      displayName: m.displayName,
+      uniformNumber: m.uniformNumber,
+      isAttending: false,
+    }));
+    return (
+      <div className="space-y-5">
+        <div>
+          <Link
+            href={`/teams/${teamId}/matches/new`}
+            className="text-sm text-gray-500 hover:text-blue-600 mb-2 inline-block"
+          >
+            ← 活動を選び直す
+          </Link>
+          <h2 className="text-lg font-bold text-gray-900 mb-0.5">試合を追加</h2>
+          <p className="text-sm text-gray-500">活動に紐付けない</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <MatchForm
+            formAction={createStandaloneMatch.bind(null, teamId)}
+            defaultMatchOrder={1}
+            members={members}
+            returnTo={`/teams/${teamId}/matches`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2b: event selected — show full match form
   if (eventId) {
     const [event, matchCount, attendances, allMembers] = await Promise.all([
       prisma.event.findFirst({ where: { id: eventId, teamId } }),
@@ -56,8 +93,7 @@ export default async function NewMatchFromListPage({ params, searchParams }: Pro
 
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <MatchForm
-            eventId={eventId}
-            teamId={teamId}
+            formAction={createMatch.bind(null, eventId, teamId)}
             defaultMatchOrder={matchCount + 1}
             members={members}
             returnTo={`/teams/${teamId}/matches`}
@@ -86,18 +122,19 @@ export default async function NewMatchFromListPage({ params, searchParams }: Pro
         <p className="text-sm text-gray-500 mt-0.5">試合を追加する活動を選んでください</p>
       </div>
 
-      {events.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
-          活動がありません
-          <p className="text-xs mt-2">
-            <Link href={`/teams/${teamId}/events/new`} className="text-blue-500 hover:underline">
-              活動を作成する
-            </Link>
-          </p>
-        </div>
-      ) : (
-        <ul className="space-y-2">
-          {events.map((event) => (
+      <ul className="space-y-2">
+        {/* 活動に紐付けない選択肢 */}
+        <li>
+          <Link
+            href={`/teams/${teamId}/matches/new?eventId=none`}
+            className="block bg-white rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-400 hover:shadow-sm transition"
+          >
+            <p className="font-medium text-gray-900">活動に紐付けない</p>
+            <p className="text-xs text-gray-400 mt-0.5">活動なしで試合結果のみ登録する</p>
+          </Link>
+        </li>
+
+        {events.map((event) => (
             <li key={event.id}>
               <Link
                 href={`/teams/${teamId}/matches/new?eventId=${event.id}`}
@@ -122,7 +159,6 @@ export default async function NewMatchFromListPage({ params, searchParams }: Pro
             </li>
           ))}
         </ul>
-      )}
     </div>
   );
 }
