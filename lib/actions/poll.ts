@@ -113,13 +113,18 @@ export async function submitPollResponse(
   redirect(`/teams/${teamId}/polls/${pollId}`);
 }
 
-export async function updatePollOptions(pollId: string, teamId: string, formData: FormData) {
+export async function updatePollOptions(
+  pollId: string,
+  teamId: string,
+  _prevState: unknown,
+  formData: FormData,
+): Promise<{ error: string } | undefined> {
   const poll = await prisma.schedulePoll.findFirst({
     where: { id: pollId, teamId },
     include: { options: { select: { id: true } } },
   });
-  if (!poll) throw new Error("日程調整が見つかりません");
-  if (poll.status === "confirmed") throw new Error("確定済みの日程調整は編集できません");
+  if (!poll) return { error: "日程調整が見つかりません" };
+  if (poll.status === "confirmed") return { error: "確定済みの日程調整は編集できません" };
 
   const existingIds = new Set(poll.options.map((o) => o.id));
   const keptIds = new Set<string>();
@@ -146,7 +151,7 @@ export async function updatePollOptions(pollId: string, teamId: string, formData
       const startDate = new Date(start);
       const endDate = end ? new Date(end) : null;
       if (endDate && endDate <= startDate) {
-        throw new Error(`候補日${i + 1}: 終了日時は開始日時より後にしてください`);
+        return { error: `候補日${i + 1}: 終了日時は開始日時より後にしてください` };
       }
       const optionData: OptionFields = {
         startDatetime: startDate,
@@ -166,7 +171,7 @@ export async function updatePollOptions(pollId: string, teamId: string, formData
   }
 
   if (toUpdate.length + toCreate.length === 0) {
-    throw new Error("候補日時を1つ以上追加してください");
+    return { error: "候補日時を1つ以上追加してください" };
   }
 
   const toDelete = poll.options.map((o) => o.id).filter((id) => !keptIds.has(id));

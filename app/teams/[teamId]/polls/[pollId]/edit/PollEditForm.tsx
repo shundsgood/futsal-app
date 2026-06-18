@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useActionState } from "react";
 import { updatePollOptions } from "@/lib/actions/poll";
 import { SubmitButton } from "@/app/_components/SubmitButton";
 
@@ -41,10 +41,11 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
   const removeOption = (localId: number) =>
     setOptions((prev) => prev.filter((o) => o.localId !== localId));
 
-  const action = updatePollOptions.bind(null, pollId, teamId);
+  const boundAction = updatePollOptions.bind(null, pollId, teamId);
+  const [state, formAction] = useActionState(boundAction, undefined);
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700">
@@ -135,6 +136,9 @@ export function PollEditForm({ pollId, teamId, initialOptions }: Props) {
         </div>
       </div>
 
+      {state?.error && (
+        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{state.error}</p>
+      )}
       <SubmitButton label="保存する" />
     </form>
   );
