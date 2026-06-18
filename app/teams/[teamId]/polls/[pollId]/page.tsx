@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { confirmPoll } from "@/lib/actions/event";
 import { reopenPoll } from "@/lib/actions/poll";
 import { SubmitButton } from "@/app/_components/SubmitButton";
 import { EVENT_TYPE_LABEL, POLL_RESPONSE_LABEL, POLL_RESPONSE_COLOR } from "@/lib/constants";
+import { PollOptionsSection } from "./_components/PollOptionsSection";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
@@ -111,61 +111,27 @@ export default async function PollDetailPage({ params }: Props) {
       </div>
 
       {/* 候補日ごとの集計 */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">集計サマリー</h3>
-        <div className="space-y-3">
-          {poll.options.map((opt, idx) => {
-            const counts = { available: 0, maybe: 0, unavailable: 0 };
-            for (const r of opt.responses) {
-              if (!activeMemberIds.has(r.teamMemberId)) continue;
-              if (r.responseType in counts)
-                counts[r.responseType as keyof typeof counts]++;
-            }
-            const answered = counts.available + counts.maybe + counts.unavailable;
-            const unanswered = allMembers.length - answered;
-
-            return (
-              <div key={opt.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs font-semibold text-gray-500 mb-1">候補 {idx + 1}</p>
-                <p className="font-medium text-gray-900">
-                  {(() => {
-                    const d = new Date(opt.startDatetime);
-                    const isDateOnly = d.getHours() === 0 && d.getMinutes() === 0 && !opt.endDatetime;
-                    return isDateOnly
-                      ? d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" })
-                      : d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit" });
-                  })()}
-                  {opt.endDatetime && (
-                    <span className="text-gray-500">
-                      {" "}〜{" "}
-                      {new Date(opt.endDatetime).toLocaleTimeString("ja-JP", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  )}
-                </p>
-                {opt.venueName && (
-                  <p className="text-xs text-gray-500 mt-0.5">{opt.venueName}</p>
-                )}
-
-                <div className="mt-3 flex gap-4 text-sm">
-                  <span className="text-green-600 font-bold">○ {counts.available}</span>
-                  <span className="text-yellow-500 font-bold">△ {counts.maybe}</span>
-                  <span className="text-red-500 font-bold">× {counts.unavailable}</span>
-                  <span className="text-gray-400">未 {unanswered}</span>
-                </div>
-
-                {poll.status === "open" && (
-                  <form action={confirmPoll.bind(null, pollId, opt.id, teamId)}>
-                    <SubmitButton label="この日で確定" />
-                  </form>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <PollOptionsSection
+        pollId={pollId}
+        teamId={teamId}
+        pollStatus={poll.status}
+        options={poll.options.map((opt) => {
+          const counts = { available: 0, maybe: 0, unavailable: 0 };
+          for (const r of opt.responses) {
+            if (!activeMemberIds.has(r.teamMemberId)) continue;
+            if (r.responseType in counts)
+              counts[r.responseType as keyof typeof counts]++;
+          }
+          const unanswered = allMembers.length - counts.available - counts.maybe - counts.unavailable;
+          return {
+            id: opt.id,
+            startDatetime: opt.startDatetime,
+            endDatetime: opt.endDatetime,
+            venueName: opt.venueName,
+            counts: { ...counts, unanswered },
+          };
+        })}
+      />
 
       {/* メンバー×候補日マトリクス */}
       <div>

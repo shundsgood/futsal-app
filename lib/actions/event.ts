@@ -11,6 +11,83 @@ const RESPONSE_TO_ATTENDANCE: Record<string, string> = {
   unavailable: "absent",
 };
 
+export async function confirmPollOptions(
+  pollId: string,
+  optionIds: string[],
+  teamId: string,
+): Promise<{ error: string } | undefined> {
+  const user = await getCurrentUser();
+
+  if (optionIds.length === 0) return { error: "日程を1つ以上選択してください" };
+
+  const [poll, activeMembers] = await Promise.all([
+    prisma.schedulePoll.findFirst({
+      where: { id: pollId, teamId },
+      include: {
+        options: {
+          where: { id: { in: optionIds } },
+          include: { responses: true },
+        },
+      },
+    }),
+    prisma.teamMember.findMany({
+      where: { teamId, membershipStatus: { not: "left" } },
+    }),
+  ]);
+
+  if (!poll) return { error: "日程調整が見つかりません" };
+  if (poll.status !== "open") return { error: "この日程調整はすでに確定済みです" };
+  if (poll.options.length === 0) return { error: "有効な候補日が見つかりません" };
+
+  let alreadyConfirmed = false;
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.schedulePoll.updateMany({
+      where: { id: pollId, status: "open" },
+      data: { status: "confirmed" },
+    });
+    if (updated.count === 0) {
+      alreadyConfirmed = true;
+      return;
+    }
+
+    for (const option of poll.options) {
+      const existing = await tx.event.findFirst({
+        where: { sourcePollId: pollId, startDatetime: option.startDatetime },
+      });
+      if (existing) continue;
+
+      const responseMap = new Map(option.responses.map((r) => [r.teamMemberId, r.responseType]));
+
+      await tx.event.create({
+        data: {
+          teamId,
+          sourcePollId: pollId,
+          title: poll.title,
+          description: poll.description,
+          eventType: poll.eventType,
+          startDatetime: option.startDatetime,
+          endDatetime: option.endDatetime,
+          venueName: option.venueName,
+          note: option.note,
+          status: "confirmed",
+          createdBy: user.id,
+          attendances: {
+            create: activeMembers.map((m) => {
+              const responseType = responseMap.get(m.id);
+              return {
+                teamMemberId: m.id,
+                status: RESPONSE_TO_ATTENDANCE[responseType ?? ""] ?? "undecided",
+              };
+            }),
+          },
+        },
+      });
+    }
+  });
+
+  if (alreadyConfirmed) return { error: "この日程調整はすでに確定済みです" };
+}
+
 export async function confirmPoll(pollId: string, optionId: string, teamId: string) {
   const user = await getCurrentUser();
 
