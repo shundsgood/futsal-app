@@ -28,6 +28,7 @@ export async function signUp(formData: FormData) {
     password,
     options: { data: { display_name: displayName } },
   });
+  console.log("[signUp] error:", error);
   if (error) throw new Error("登録に失敗しました: " + error.message);
 
   redirect("/");
