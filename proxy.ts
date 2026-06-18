@@ -35,14 +35,19 @@ export async function proxy(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user && !isPublic) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
+    response.headers.set("x-pathname", pathname);
     return response;
   } catch (e) {
     console.error("[proxy] error:", e);
     if (!isPublic) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
     return NextResponse.next({ request });
   }
