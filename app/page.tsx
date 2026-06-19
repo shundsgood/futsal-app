@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { signOut } from "@/lib/actions/auth";
+import { JoinByCodeForm } from "@/app/_components/JoinByCodeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,12 @@ export default async function HomePage() {
               </button>
             </form>
           </div>
+        </div>
+
+        {/* コードで参加 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-2">コードで参加</p>
+          <JoinByCodeForm />
         </div>
 
         {teams.length === 0 ? (

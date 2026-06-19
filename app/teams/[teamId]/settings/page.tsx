@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { generateTeamCode } from "@/lib/actions/team";
 import { DeleteTeamButton } from "./_components/DeleteTeamButton";
 import { CopyInviteLinkButton } from "./_components/CopyInviteLinkButton";
+import { SubmitButton } from "@/app/_components/SubmitButton";
 
 type Props = { params: Promise<{ teamId: string }> };
 
@@ -38,6 +40,26 @@ export default async function TeamSettingsPage({ params }: Props) {
             <p className="text-sm font-medium text-gray-700 pt-2">説明</p>
             <p className="text-gray-900">{team.description}</p>
           </>
+        )}
+      </div>
+
+      {/* チームコード */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-medium text-gray-700 mb-1">チームコード</p>
+        <p className="text-xs text-gray-500 mb-3">
+          コードを共有するとメンバーがホーム画面から参加できます
+        </p>
+        {team.inviteCode ? (
+          <>
+            <p className="text-2xl font-bold text-gray-900 tracking-widest text-center bg-gray-50 rounded-lg py-3 mb-3 font-mono">
+              {team.inviteCode}
+            </p>
+            <CopyInviteLinkButton url={team.inviteCode} label="コードをコピー" />
+          </>
+        ) : (
+          <form action={generateTeamCode.bind(null, teamId)}>
+            <SubmitButton label="コードを発行する" pendingLabel="発行中..." />
+          </form>
         )}
       </div>
 

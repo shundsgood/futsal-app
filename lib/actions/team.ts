@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidateTag, refresh } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { generateInviteCode } from "@/lib/utils";
 
 export async function createTeam(formData: FormData) {
   const user = await getCurrentUser();
@@ -14,12 +15,20 @@ export async function createTeam(formData: FormData) {
 
   if (!name) throw new Error("チーム名は必須です");
 
+  let inviteCode: string | undefined;
+  for (let i = 0; i < 3; i++) {
+    const code = generateInviteCode();
+    const exists = await prisma.team.findUnique({ where: { inviteCode: code } });
+    if (!exists) { inviteCode = code; break; }
+  }
+
   const team = await prisma.team.create({
     data: {
       name,
       description,
       activityArea,
       ownerUserId: user.id,
+      inviteCode,
       members: {
         create: {
           userId: user.id,
@@ -53,6 +62,56 @@ export async function deleteTeam(teamId: string) {
   ]);
 
   redirect("/");
+}
+
+export async function generateTeamCode(teamId: string) {
+  const user = await getCurrentUser();
+  const team = await prisma.team.findFirst({ where: { id: teamId, ownerUserId: user.id } });
+  if (!team) throw new Error("チームが見つかりません");
+
+  let inviteCode: string | undefined;
+  for (let i = 0; i < 3; i++) {
+    const code = generateInviteCode();
+    const exists = await prisma.team.findUnique({ where: { inviteCode: code } });
+    if (!exists) { inviteCode = code; break; }
+  }
+  if (!inviteCode) throw new Error("コードの生成に失敗しました");
+
+  await prisma.team.update({ where: { id: teamId }, data: { inviteCode } });
+  revalidateTag(`team-${teamId}`, "max");
+  refresh();
+}
+
+export async function joinTeamByCode(
+  _prevState: unknown,
+  formData: FormData,
+): Promise<{ error: string } | { teamId: string }> {
+  try {
+    const code = (formData.get("code") as string).trim().toUpperCase();
+    if (!code) return { error: "コードを入力してください" };
+
+    const user = await getCurrentUser();
+    const team = await prisma.team.findUnique({ where: { inviteCode: code } });
+    if (!team) return { error: "コードが正しくありません" };
+
+    const existing = await prisma.teamMember.findFirst({ where: { teamId: team.id, userId: user.id } });
+    if (!existing) {
+      await prisma.teamMember.create({
+        data: {
+          teamId: team.id,
+          userId: user.id,
+          displayName: user.displayName,
+          role: "member",
+          membershipStatus: "active",
+        },
+      });
+      revalidateTag(`team-${team.id}`, "max");
+    }
+
+    return { teamId: team.id };
+  } catch {
+    return { error: "参加に失敗しました。もう一度お試しください。" };
+  }
 }
 
 export async function joinTeam(

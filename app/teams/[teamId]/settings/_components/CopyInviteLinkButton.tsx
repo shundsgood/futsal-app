@@ -1,11 +1,11 @@
 "use client";
 
-type Props = { url: string };
+type Props = { url: string; label?: string };
 
-export function CopyInviteLinkButton({ url }: Props) {
+export function CopyInviteLinkButton({ url, label = "リンクをコピー" }: Props) {
   const handleCopy = () => {
     navigator.clipboard.writeText(url).then(() => {
-      alert("リンクをコピーしました");
+      alert("コピーしました");
     });
   };
 
@@ -15,7 +15,7 @@ export function CopyInviteLinkButton({ url }: Props) {
       onClick={handleCopy}
       className="w-full border border-gray-300 text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-50 transition text-sm"
     >
-      リンクをコピー
+      {label}
     </button>
   );
 }

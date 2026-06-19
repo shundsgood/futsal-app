@@ -26,6 +26,7 @@ model Team {
   description  String?
   activityArea String?
   ownerUserId  String
+  inviteCode   String?  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
