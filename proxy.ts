@@ -4,7 +4,11 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic =
-    pathname.startsWith("/login") || pathname.startsWith("/auth");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/icon.png" ||
+    pathname === "/apple-icon.png";
 
   try {
     let response = NextResponse.next({ request });
