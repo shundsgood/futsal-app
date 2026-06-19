@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { reopenPoll } from "@/lib/actions/poll";
 import { SubmitButton } from "@/app/_components/SubmitButton";
 import { EVENT_TYPE_LABEL, POLL_RESPONSE_LABEL, POLL_RESPONSE_COLOR } from "@/lib/constants";
 import { PollOptionsSection } from "./_components/PollOptionsSection";
+import { CopyInviteLinkButton } from "../../settings/_components/CopyInviteLinkButton";
 
 type Props = { params: Promise<{ teamId: string; pollId: string }> };
 
@@ -26,6 +28,12 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default async function PollDetailPage({ params }: Props) {
   const { teamId, pollId } = await params;
+
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "";
+  const proto = headersList.get("x-forwarded-proto") ?? "https";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
+  const shareUrl = `${baseUrl}/teams/${teamId}/polls/${pollId}`;
 
   const [poll, allMembers] = await unstable_cache(
     async () => Promise.all([
@@ -109,6 +117,15 @@ export default async function PollDetailPage({ params }: Props) {
             )}
           </div>
         )}
+      </div>
+
+      {/* 共有リンク */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <p className="text-xs text-gray-500 mb-2">回答リンクを共有</p>
+        <p className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 break-all mb-2 font-mono">
+          {shareUrl}
+        </p>
+        <CopyInviteLinkButton url={shareUrl} />
       </div>
 
       {/* 候補日ごとの集計 */}
