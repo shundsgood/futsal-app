@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -77,5 +78,6 @@ export async function joinTeam(
     },
   });
 
+  revalidateTag(`team-${teamId}`, "max");
   redirect(`/teams/${teamId}`);
 }
