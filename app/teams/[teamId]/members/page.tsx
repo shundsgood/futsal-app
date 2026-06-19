@@ -25,7 +25,7 @@ export default async function MembersPage({ params }: Props) {
       orderBy: [{ membershipStatus: "asc" }, { uniformNumber: "asc" }, { displayName: "asc" }],
     }),
     [`members-${teamId}`],
-    { tags: [`team-${teamId}`] },
+    { tags: [`team-${teamId}`], revalidate: 300 },
   )();
 
   return (
