@@ -21,6 +21,14 @@ type InitialGoal = {
   assistValue: string;
 };
 
+const TOURNAMENT_LEVELS = [
+  { value: "", label: "未設定" },
+  { value: "ウルトラビギナー", label: "ウルトラビギナー" },
+  { value: "スーパービギナー", label: "スーパービギナー" },
+  { value: "ビギナー", label: "ビギナー" },
+  { value: "その他", label: "その他" },
+];
+
 type Props = {
   matchId: string;
   eventId: string | null;
@@ -35,6 +43,7 @@ type Props = {
   };
   members: Member[];
   initialGoals: InitialGoal[];
+  tournamentLevel?: string | null;
   returnTo?: string;
 };
 
@@ -51,6 +60,7 @@ export function MatchEditForm({
   defaultValues,
   members,
   initialGoals,
+  tournamentLevel,
   returnTo,
 }: Props) {
   const nextLocalId = useRef(initialGoals.length);
@@ -110,6 +120,22 @@ export function MatchEditForm({
     <div className="space-y-6">
       <form action={updateAction} className="space-y-5">
         {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
+        {/* 大会レベル */}
+        <div>
+          <label htmlFor="tournamentLevel" className="block text-sm font-medium text-gray-700 mb-1">
+            大会レベル
+          </label>
+          <select
+            id="tournamentLevel"
+            name="tournamentLevel"
+            defaultValue={tournamentLevel ?? ""}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            {TOURNAMENT_LEVELS.map((l) => (
+              <option key={l.value} value={l.value}>{l.label}</option>
+            ))}
+          </select>
+        </div>
         {/* 試合順 */}
         <div>
           <label htmlFor="matchOrder" className="block text-sm font-medium text-gray-700 mb-1">

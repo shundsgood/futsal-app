@@ -228,6 +228,7 @@ export async function updateEvent(eventId: string, teamId: string, formData: For
   const description = (formData.get("description") as string | null)?.trim() || null;
   const note = (formData.get("note") as string | null)?.trim() || null;
   const finalRank = (formData.get("finalRank") as string | null)?.trim() || null;
+  const tournamentLevel = (formData.get("tournamentLevel") as string | null)?.trim() || null;
 
   await prisma.event.update({
     where: { id: eventId },
@@ -240,6 +241,7 @@ export async function updateEvent(eventId: string, teamId: string, formData: For
       description,
       note,
       finalRank,
+      tournamentLevel,
     },
   });
 

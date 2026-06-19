@@ -125,9 +125,10 @@ model Event {
   endDatetime   DateTime?
   venueName     String?
   note          String?
-  finalRank     String?
+  finalRank       String?
+  tournamentLevel String?
   // confirmed | cancelled
-  status        String    @default("confirmed")
+  status          String    @default("confirmed")
   createdBy     String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -165,9 +166,10 @@ model Match {
   opponentScore Int
   // win | draw | loss
   result        String
-  memo          String?
-  matchUrl      String?
-  createdAt     DateTime @default(now())
+  memo            String?
+  matchUrl        String?
+  tournamentLevel String?
+  createdAt       DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   team    Team          @relation(fields: [teamId], references: [id])

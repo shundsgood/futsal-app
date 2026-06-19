@@ -17,6 +17,14 @@ const EVENT_TYPES = [
   { value: "other", label: "その他" },
 ];
 
+const TOURNAMENT_LEVELS = [
+  { value: "", label: "未設定" },
+  { value: "ウルトラビギナー", label: "ウルトラビギナー" },
+  { value: "スーパービギナー", label: "スーパービギナー" },
+  { value: "ビギナー", label: "ビギナー" },
+  { value: "その他", label: "その他" },
+];
+
 
 export default async function EditEventPage({ params }: Props) {
   const { teamId, eventId } = await params;
@@ -65,6 +73,25 @@ export default async function EditEventPage({ params }: Props) {
               {EVENT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 大会レベル */}
+          <div>
+            <label htmlFor="tournamentLevel" className="block text-sm font-medium text-gray-700 mb-1">
+              大会レベル
+            </label>
+            <select
+              id="tournamentLevel"
+              name="tournamentLevel"
+              defaultValue={event.tournamentLevel ?? ""}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {TOURNAMENT_LEVELS.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
                 </option>
               ))}
             </select>

@@ -71,6 +71,7 @@ export default async function EditStandaloneMatchPage({ params, searchParams }: 
           }}
           members={members}
           initialGoals={initialGoals}
+          tournamentLevel={match.tournamentLevel}
           returnTo={backHref}
         />
       </div>

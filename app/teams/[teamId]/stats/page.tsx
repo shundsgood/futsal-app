@@ -1,7 +1,10 @@
-import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { StatsFilter } from "@/app/_components/StatsFilter";
 
-type Props = { params: Promise<{ teamId: string }> };
+type Props = {
+  params: Promise<{ teamId: string }>;
+  searchParams: Promise<{ level?: string; year?: string; from?: string; to?: string }>;
+};
 
 type MemberStat = {
   id: string;
@@ -18,6 +21,20 @@ type MemberStat = {
 
 function fmt1(n: number): string {
   return n.toFixed(1);
+}
+
+function buildDateRange(year?: string, from?: string, to?: string) {
+  if (year) {
+    const y = parseInt(year, 10);
+    return { gte: new Date(`${y}-01-01T00:00:00+09:00`), lt: new Date(`${y + 1}-01-01T00:00:00+09:00`) };
+  }
+  if (from || to) {
+    return {
+      ...(from ? { gte: new Date(`${from}T00:00:00+09:00`) } : {}),
+      ...(to ? { lt: new Date(`${to}T23:59:59+09:00`) } : {}),
+    };
+  }
+  return undefined;
 }
 
 function RankingList({
@@ -80,38 +97,80 @@ function RankingList({
   );
 }
 
-export default async function StatsPage({ params }: Props) {
+export default async function StatsPage({ params, searchParams }: Props) {
   const { teamId } = await params;
+  const { level, year, from, to } = await searchParams;
 
-  const [members, matches, matchCounts, goalCounts, assistCounts] = await unstable_cache(
-    async () => Promise.all([
+  const dateRange = buildDateRange(year, from, to);
+
+  // フィルター条件構築
+  const levelFilter = level
+    ? {
+        OR: [
+          { eventId: null as null, tournamentLevel: level },
+          { eventId: { not: null as null }, event: { tournamentLevel: level } },
+        ],
+      }
+    : undefined;
+
+  const dateFilter = dateRange
+    ? {
+        OR: [
+          { eventId: null as null, createdAt: dateRange },
+          { eventId: { not: null as null }, event: { startDatetime: dateRange } },
+        ],
+      }
+    : undefined;
+
+  const matchWhere = {
+    teamId,
+    ...(levelFilter || dateFilter
+      ? { AND: [...(levelFilter ? [levelFilter] : []), ...(dateFilter ? [dateFilter] : [])] }
+      : {}),
+  };
+
+  const [members, matches, matchCounts, goalCounts, assistCounts, allEventDates, standaloneMatches] =
+    await Promise.all([
       prisma.teamMember.findMany({
         where: { teamId, membershipStatus: { not: "left" } },
         orderBy: [{ uniformNumber: "asc" }, { displayName: "asc" }],
       }),
       prisma.match.findMany({
-        where: { teamId },
+        where: matchWhere,
         select: { result: true, ourScore: true, opponentScore: true },
       }),
       prisma.matchPlayer.groupBy({
         by: ["teamMemberId"],
-        where: { match: { teamId } },
+        where: { match: matchWhere },
         _count: { id: true },
       }),
       prisma.goal.groupBy({
         by: ["scorerId"],
-        where: { goalType: "normal", scorerId: { not: null }, match: { teamId } },
+        where: { goalType: "normal", scorerId: { not: null }, match: matchWhere },
         _count: { id: true },
       }),
       prisma.goal.groupBy({
         by: ["assistId"],
-        where: { assistType: "member", assistId: { not: null }, match: { teamId } },
+        where: { assistType: "member", assistId: { not: null }, match: matchWhere },
         _count: { id: true },
       }),
-    ]),
-    [`stats-${teamId}`],
-    { tags: [`team-${teamId}`] },
-  )();
+      // 年タブ用: イベントあり試合の年
+      prisma.event.findMany({
+        where: { teamId, matches: { some: {} } },
+        select: { startDatetime: true },
+      }),
+      // 年タブ用: スタンドアロン試合の年
+      prisma.match.findMany({
+        where: { teamId, eventId: null },
+        select: { createdAt: true },
+      }),
+    ]);
+
+  // 年一覧を計算
+  const yearSet = new Set<number>();
+  for (const e of allEventDates) yearSet.add(new Date(e.startDatetime).getFullYear());
+  for (const m of standaloneMatches) yearSet.add(new Date(m.createdAt).getFullYear());
+  const years = [...yearSet].sort((a, b) => b - a);
 
   // チーム成績
   const totalMatches = matches.length;
@@ -165,6 +224,14 @@ export default async function StatsPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <StatsFilter
+        years={years}
+        currentYear={year}
+        currentLevel={level}
+        currentFrom={from}
+        currentTo={to}
+      />
+
       {/* チーム成績 */}
       <section>
         <h2 className="text-sm font-semibold text-gray-700 mb-2">チーム成績</h2>

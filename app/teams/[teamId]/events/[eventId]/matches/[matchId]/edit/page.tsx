@@ -12,7 +12,7 @@ export default async function EditMatchPage({ params, searchParams }: Props) {
   const { teamId, eventId, matchId } = await params;
   const { returnTo } = await searchParams;
 
-  const [match, attendances, allMembers] = await Promise.all([
+  const [match, event, attendances, allMembers] = await Promise.all([
     prisma.match.findUnique({
       where: { id: matchId },
       include: {
@@ -20,6 +20,7 @@ export default async function EditMatchPage({ params, searchParams }: Props) {
         goals: { orderBy: { goalOrder: "asc" } },
       },
     }),
+    prisma.event.findUnique({ where: { id: eventId }, select: { tournamentLevel: true } }),
     prisma.eventAttendance.findMany({
       where: { eventId },
       select: { teamMemberId: true, status: true },
@@ -74,6 +75,7 @@ export default async function EditMatchPage({ params, searchParams }: Props) {
           }}
           members={members}
           initialGoals={initialGoals}
+          tournamentLevel={event?.tournamentLevel}
           returnTo={returnTo}
         />
       </div>

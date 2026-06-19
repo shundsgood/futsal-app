@@ -1,16 +1,61 @@
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
+import { StatsFilter } from "@/app/_components/StatsFilter";
 
-type Props = { params: Promise<{ teamId: string }> };
+type Props = {
+  params: Promise<{ teamId: string }>;
+  searchParams: Promise<{ level?: string; year?: string; from?: string; to?: string }>;
+};
 
-export default async function MatchesPage({ params }: Props) {
+function buildDateRange(year?: string, from?: string, to?: string) {
+  if (year) {
+    const y = parseInt(year, 10);
+    return { gte: new Date(`${y}-01-01T00:00:00+09:00`), lt: new Date(`${y + 1}-01-01T00:00:00+09:00`) };
+  }
+  if (from || to) {
+    return {
+      ...(from ? { gte: new Date(`${from}T00:00:00+09:00`) } : {}),
+      ...(to ? { lt: new Date(`${to}T23:59:59+09:00`) } : {}),
+    };
+  }
+  return undefined;
+}
+
+export default async function MatchesPage({ params, searchParams }: Props) {
   const { teamId } = await params;
+  const { level, year, from, to } = await searchParams;
 
-  const matches = await unstable_cache(
-    async () => prisma.match.findMany({
-      where: { teamId },
+  const dateRange = buildDateRange(year, from, to);
+
+  const levelFilter = level
+    ? {
+        OR: [
+          { eventId: null as null, tournamentLevel: level },
+          { eventId: { not: null as null }, event: { tournamentLevel: level } },
+        ],
+      }
+    : undefined;
+
+  const dateFilter = dateRange
+    ? {
+        OR: [
+          { eventId: null as null, createdAt: dateRange },
+          { eventId: { not: null as null }, event: { startDatetime: dateRange } },
+        ],
+      }
+    : undefined;
+
+  const matchWhere = {
+    teamId,
+    ...(levelFilter || dateFilter
+      ? { AND: [...(levelFilter ? [levelFilter] : []), ...(dateFilter ? [dateFilter] : [])] }
+      : {}),
+  };
+
+  const [matches, allEventDates, standaloneMatches] = await Promise.all([
+    prisma.match.findMany({
+      where: matchWhere,
       include: {
         event: { select: { id: true, title: true, startDatetime: true, venueName: true } },
         goals: {
@@ -23,9 +68,20 @@ export default async function MatchesPage({ params }: Props) {
         { matchOrder: "asc" },
       ],
     }),
-    [`matches-${teamId}`],
-    { tags: [`team-${teamId}`] },
-  )();
+    prisma.event.findMany({
+      where: { teamId, matches: { some: {} } },
+      select: { startDatetime: true },
+    }),
+    prisma.match.findMany({
+      where: { teamId, eventId: null },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  const yearSet = new Set<number>();
+  for (const e of allEventDates) yearSet.add(new Date(e.startDatetime).getFullYear());
+  for (const m of standaloneMatches) yearSet.add(new Date(m.createdAt).getFullYear());
+  const years = [...yearSet].sort((a, b) => b - a);
 
   const returnTo = `/teams/${teamId}/matches`;
 
@@ -40,6 +96,14 @@ export default async function MatchesPage({ params }: Props) {
           ＋ 試合を追加
         </Link>
       </div>
+
+      <StatsFilter
+        years={years}
+        currentYear={year}
+        currentLevel={level}
+        currentFrom={from}
+        currentTo={to}
+      />
 
       {matches.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">

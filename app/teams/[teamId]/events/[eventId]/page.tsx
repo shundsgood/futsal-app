@@ -62,9 +62,16 @@ export default async function EventDetailPage({ params }: Props) {
           )}
         </div>
 
-        {event.finalRank && (
-          <p className="text-sm font-bold text-blue-700 mb-2">{event.finalRank}</p>
-        )}
+        <div className="flex items-center gap-2 mb-2">
+          {event.finalRank && (
+            <p className="text-sm font-bold text-blue-700">{event.finalRank}</p>
+          )}
+          {event.tournamentLevel && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+              {event.tournamentLevel}
+            </span>
+          )}
+        </div>
 
         <div className="space-y-1 text-sm text-gray-600">
           <p>

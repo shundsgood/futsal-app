@@ -153,13 +153,17 @@ export async function updateMatch(
   }
 
   const result = calcResult(ourScore, opponentScore);
+  const tournamentLevel = (formData.get("tournamentLevel") as string | null)?.trim() || null;
 
   await prisma.$transaction(async (tx) => {
     await tx.matchPlayer.deleteMany({ where: { matchId } });
     await tx.goal.deleteMany({ where: { matchId } });
     await tx.match.update({
       where: { id: matchId },
-      data: { matchOrder, opponentName, ourScore, opponentScore, result, memo, matchUrl },
+      data: {
+        matchOrder, opponentName, ourScore, opponentScore, result, memo, matchUrl,
+        tournamentLevel: eventId ? undefined : tournamentLevel,
+      },
     });
     if (playerIds.length > 0) {
       await tx.matchPlayer.createMany({
@@ -168,6 +172,9 @@ export async function updateMatch(
     }
     if (goals.length > 0) {
       await tx.goal.createMany({ data: goals.map((g) => ({ matchId, ...g })) });
+    }
+    if (eventId && formData.has("tournamentLevel")) {
+      await tx.event.update({ where: { id: eventId }, data: { tournamentLevel } });
     }
   });
 
