@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, refresh } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -60,24 +60,28 @@ export async function joinTeam(
   _prevState: unknown,
   _formData: FormData,
 ): Promise<{ error: string } | undefined> {
-  const user = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-  const team = await prisma.team.findUnique({ where: { id: teamId } });
-  if (!team) return { error: "チームが見つかりません" };
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) return { error: "チームが見つかりません" };
 
-  const existing = await prisma.teamMember.findFirst({ where: { teamId, userId: user.id } });
-  if (existing) redirect(`/teams/${teamId}`);
+    const existing = await prisma.teamMember.findFirst({ where: { teamId, userId: user.id } });
+    if (!existing) {
+      await prisma.teamMember.create({
+        data: {
+          teamId,
+          userId: user.id,
+          displayName: user.displayName,
+          role: "member",
+          membershipStatus: "active",
+        },
+      });
+    }
 
-  await prisma.teamMember.create({
-    data: {
-      teamId,
-      userId: user.id,
-      displayName: user.displayName,
-      role: "member",
-      membershipStatus: "active",
-    },
-  });
-
-  revalidateTag(`team-${teamId}`, "max");
-  redirect(`/teams/${teamId}`);
+    revalidateTag(`team-${teamId}`, "max");
+    refresh();
+  } catch {
+    return { error: "参加に失敗しました。もう一度お試しください。" };
+  }
 }
