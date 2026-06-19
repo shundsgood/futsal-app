@@ -52,7 +52,13 @@ export default async function EventsPage({ params, searchParams }: Props) {
           );
         })}
       </div>
-      <EventList teamId={teamId} events={events} />
+      {events.length === 0 && status ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+          該当するイベントがありません
+        </div>
+      ) : (
+        <EventList teamId={teamId} events={events} />
+      )}
     </div>
   );
 }
