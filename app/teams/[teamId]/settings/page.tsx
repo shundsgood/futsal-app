@@ -17,7 +17,8 @@ export default async function TeamSettingsPage({ params }: Props) {
 
   const host = headersList.get("host") ?? "";
   const proto = headersList.get("x-forwarded-proto") ?? "https";
-  const inviteUrl = `${proto}://${host}/teams/${teamId}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
+  const inviteUrl = `${baseUrl}/teams/${teamId}`;
 
   return (
     <div className="space-y-6">
