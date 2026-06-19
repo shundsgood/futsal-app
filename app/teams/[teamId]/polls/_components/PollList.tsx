@@ -120,6 +120,7 @@ export function PollList({ teamId, polls }: Props) {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggle(poll.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="mt-1 h-4 w-4 accent-red-500 shrink-0"
                     />
                   )}
