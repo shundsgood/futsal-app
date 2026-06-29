@@ -6,14 +6,14 @@ import { useState } from "react";
 const LEVELS = ["ウルトラビギナー", "スーパービギナー", "ビギナー", "その他"] as const;
 
 type Props = {
-  years: number[];
-  currentYear?: string;
+  seasons: string[];
+  currentSeason?: string;
   currentLevel?: string;
   currentFrom?: string;
   currentTo?: string;
 };
 
-export function StatsFilter({ years, currentYear, currentLevel, currentFrom, currentTo }: Props) {
+export function StatsFilter({ seasons, currentSeason, currentLevel, currentFrom, currentTo }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [from, setFrom] = useState(currentFrom ?? "");
@@ -22,7 +22,7 @@ export function StatsFilter({ years, currentYear, currentLevel, currentFrom, cur
   function buildUrl(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
     const values: Record<string, string | undefined> = {
-      year: currentYear,
+      season: currentSeason,
       level: currentLevel,
       from: currentFrom,
       to: currentTo,
@@ -35,8 +35,8 @@ export function StatsFilter({ years, currentYear, currentLevel, currentFrom, cur
     return qs ? `${pathname}?${qs}` : pathname;
   }
 
-  function handleYearClick(year: string | undefined) {
-    router.push(buildUrl({ year, from: undefined, to: undefined }));
+  function handleSeasonClick(season: string | undefined) {
+    router.push(buildUrl({ season, from: undefined, to: undefined }));
   }
 
   function handleLevelChange(level: string) {
@@ -44,7 +44,7 @@ export function StatsFilter({ years, currentYear, currentLevel, currentFrom, cur
   }
 
   function handleDateApply() {
-    router.push(buildUrl({ from: from || undefined, to: to || undefined, year: undefined }));
+    router.push(buildUrl({ from: from || undefined, to: to || undefined, season: undefined }));
   }
 
   function handleReset() {
@@ -53,38 +53,38 @@ export function StatsFilter({ years, currentYear, currentLevel, currentFrom, cur
     router.push(pathname);
   }
 
-  const activeYear = currentYear;
+  const activeSeason = currentSeason;
   const hasCustomDate = currentFrom || currentTo;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-      {/* 年タブ */}
+      {/* シーズンタブ */}
       <div>
         <p className="text-xs text-gray-500 mb-1.5">期間</p>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
-            onClick={() => handleYearClick(undefined)}
+            onClick={() => handleSeasonClick(undefined)}
             className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-              !activeYear && !hasCustomDate
+              !activeSeason && !hasCustomDate
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             すべて
           </button>
-          {years.map((y) => (
+          {seasons.map((s) => (
             <button
-              key={y}
+              key={s}
               type="button"
-              onClick={() => handleYearClick(String(y))}
+              onClick={() => handleSeasonClick(s)}
               className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                activeYear === String(y)
+                activeSeason === s
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {y}年
+              {s}
             </button>
           ))}
         </div>
@@ -147,7 +147,7 @@ export function StatsFilter({ years, currentYear, currentLevel, currentFrom, cur
       </div>
 
       {/* リセット */}
-      {(activeYear || hasCustomDate || currentLevel) && (
+      {(activeSeason || hasCustomDate || currentLevel) && (
         <button
           type="button"
           onClick={handleReset}

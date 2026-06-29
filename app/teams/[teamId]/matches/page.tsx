@@ -2,17 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { MATCH_RESULT_LABEL, MATCH_RESULT_COLOR, GOAL_TYPE_LABEL } from "@/lib/constants";
 import { StatsFilter } from "@/app/_components/StatsFilter";
+import { dateToSeason, seasonToDateRange } from "@/lib/utils";
 
 type Props = {
   params: Promise<{ teamId: string }>;
-  searchParams: Promise<{ level?: string; year?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ level?: string; season?: string; from?: string; to?: string }>;
 };
 
-function buildDateRange(year?: string, from?: string, to?: string) {
-  if (year) {
-    const y = parseInt(year, 10);
-    return { gte: new Date(`${y}-01-01T00:00:00+09:00`), lt: new Date(`${y + 1}-01-01T00:00:00+09:00`) };
-  }
+function buildDateRange(season?: string, from?: string, to?: string) {
+  if (season) return seasonToDateRange(season);
   if (from || to) {
     return {
       ...(from ? { gte: new Date(`${from}T00:00:00+09:00`) } : {}),
@@ -24,9 +22,9 @@ function buildDateRange(year?: string, from?: string, to?: string) {
 
 export default async function MatchesPage({ params, searchParams }: Props) {
   const { teamId } = await params;
-  const { level, year, from, to } = await searchParams;
+  const { level, season, from, to } = await searchParams;
 
-  const dateRange = buildDateRange(year, from, to);
+  const dateRange = buildDateRange(season, from, to);
 
   const levelFilter = level
     ? {
@@ -78,10 +76,10 @@ export default async function MatchesPage({ params, searchParams }: Props) {
     }),
   ]);
 
-  const yearSet = new Set<number>();
-  for (const e of allEventDates) yearSet.add(new Date(e.startDatetime).getFullYear());
-  for (const m of standaloneMatches) yearSet.add(new Date(m.createdAt).getFullYear());
-  const years = [...yearSet].sort((a, b) => b - a);
+  const seasonSet = new Set<string>();
+  for (const e of allEventDates) seasonSet.add(dateToSeason(new Date(e.startDatetime)));
+  for (const m of standaloneMatches) seasonSet.add(dateToSeason(new Date(m.createdAt)));
+  const seasons = [...seasonSet].sort((a, b) => b.localeCompare(a));
 
   const returnTo = `/teams/${teamId}/matches`;
 
@@ -98,8 +96,8 @@ export default async function MatchesPage({ params, searchParams }: Props) {
       </div>
 
       <StatsFilter
-        years={years}
-        currentYear={year}
+        seasons={seasons}
+        currentSeason={season}
         currentLevel={level}
         currentFrom={from}
         currentTo={to}
